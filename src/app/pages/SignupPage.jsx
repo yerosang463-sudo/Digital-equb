@@ -1,0 +1,131 @@
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
+
+export function SignupPage() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: ""
+  });
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  const handleSignup = (e) => {
+    e.preventDefault();
+    // Mock signup - in production, this would create account in backend
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords don't match!");
+      return;
+    }
+    navigate("/dashboard");
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#1E3A8A] to-[#3B82F6] flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-3xl">E</span>
+            </div>
+          </div>
+          <CardTitle className="text-2xl text-center">Create Account</CardTitle>
+          <CardDescription className="text-center">
+            Join Digital Equb and start saving today
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSignup}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                placeholder="Abebe Bekele"
+                value={formData.fullName}
+                onChange={handleChange}
+                required />
+              
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="name@example.com"
+                value={formData.email}
+                onChange={handleChange}
+                required />
+              
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="+251 91 234 5678"
+                value={formData.phone}
+                onChange={handleChange}
+                required />
+              
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={handleChange}
+                required />
+              
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required />
+              
+            </div>
+            <label className="flex items-start gap-2 text-sm">
+              <input type="checkbox" className="mt-1 rounded" required />
+              <span className="text-gray-600">
+                I agree to the{" "}
+                <a href="#" className="text-[#1E3A8A] hover:underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-[#1E3A8A] hover:underline">
+                  Privacy Policy
+                </a>
+              </span>
+            </label>
+          </CardContent>
+          <CardFooter className="flex flex-col space-y-4">
+            <Button type="submit" className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
+              Create Account
+            </Button>
+            <p className="text-sm text-center text-gray-600">
+              Already have an account?{" "}
+              <Link to="/login" className="text-[#1E3A8A] hover:underline font-medium">
+                Sign in
+              </Link>
+            </p>
+          </CardFooter>
+        </form>
+      </Card>
+    </div>);
+
+}
