@@ -1,0 +1,27 @@
+node_modules/
+dist/
+.DS_Store
+.env
+.env.local
+
+# Dependencies
+/node_modules
+/venv
+/.cache
+/dist
+
+# IDE files
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# Build outputs
+*.log
+*.pyc
+*.swp
+*.swo
+*.zip
+
+# Miscellaneous
+.DS_Store
