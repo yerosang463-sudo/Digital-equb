@@ -14,7 +14,7 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Join the Digital Equb Revolution
+              Join the Digital Equb Savings Circle
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-blue-100">
               Traditional Ethiopian savings circle, powered by modern technology. Save together, grow together.
@@ -66,7 +66,7 @@ export function HomePage() {
                 </div>
                 <h3 className="text-xl font-semibold mb-3">Grow Your Savings</h3>
                 <p className="text-gray-600">
-                  Disciplined monthly contributions help you save more than you thought possible
+                  Disciplined Daily, Weekly and Monthly Payments. Your contributions help you save more than you thought possible
                 </p>
               </CardContent>
             </Card>
