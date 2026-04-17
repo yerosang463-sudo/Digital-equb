@@ -23,8 +23,14 @@ export function GroupCard({
   contributionAmount,
   progress,
   admin,
-  status = "active"
+  status = "active",
+  frequency = "monthly",
+  isMember = false,
 }) {
+  const buttonLabel = isMember || status === "full" || status === "active" || status === "completed"
+    ? "View Details"
+    : "Join Group";
+
   return (
     <Card className="hover:shadow-lg transition-shadow">
       <CardHeader>
@@ -57,7 +63,7 @@ export function GroupCard({
             </span>
           </div>
           <div className="text-right">
-            <p className="text-sm text-gray-600">Monthly</p>
+            <p className="text-sm text-gray-600 capitalize">{frequency}</p>
             <p className="font-semibold text-[#1E3A8A]">{contributionAmount} Birr</p>
           </div>
         </div>
@@ -65,7 +71,7 @@ export function GroupCard({
       <CardFooter>
         <Link to={`/dashboard/groups/${id}`} className="w-full">
           <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
-            {status === "full" ? "View Details" : "Join Group"}
+            {buttonLabel}
           </Button>
         </Link>
       </CardFooter>

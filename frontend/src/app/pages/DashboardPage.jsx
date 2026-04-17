@@ -1,56 +1,107 @@
+import { useEffect, useState } from "react";
 import { Users, TrendingUp, CreditCard, DollarSign } from "lucide-react";
+import { Link } from "react-router";
 import { StatsCard } from "../components/StatsCard";
 import { GroupCard } from "../components/GroupCard";
 import { NotificationCard } from "../components/NotificationCard";
-import { mockGroups, mockPayments, mockNotifications } from "../data/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Link } from "react-router";
+import { apiRequest } from "../lib/api";
+import { useAuth } from "../providers/AuthProvider";
 
 export function DashboardPage() {
-  const activeGroups = mockGroups.filter((g) => g.status === "active" || g.status === "full");
-  const pendingPayments = mockPayments.filter((p) => p.status === "pending");
-  const totalSaved = mockPayments.
-  filter((p) => p.status === "completed").
-  reduce((sum, p) => sum + p.amount, 0);
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState(null);
+  const [groups, setGroups] = useState([]);
+  const [pendingPayments, setPendingPayments] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadDashboard() {
+      try {
+        const [statsResponse, groupsResponse, paymentsResponse, notificationsResponse] = await Promise.all([
+          apiRequest("/api/dashboard/stats"),
+          apiRequest("/api/groups/my"),
+          apiRequest("/api/payments?status=pending&limit=10"),
+          apiRequest("/api/notifications?limit=5"),
+        ]);
+
+        if (!ignore) {
+          setStats(statsResponse.stats);
+          setGroups(groupsResponse.groups || []);
+          setPendingPayments(paymentsResponse.payments || []);
+          setNotifications(notificationsResponse.notifications || []);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setStats(null);
+          setGroups([]);
+          setPendingPayments([]);
+          setNotifications([]);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadDashboard();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const activeGroups = groups.filter((group) =>
+    ["active", "full", "completed"].includes(group.display_status || group.status)
+  );
+
+  if (loading) {
+    return <div className="text-gray-600">Loading dashboard...</div>;
+  }
 
   return (
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <p className="text-gray-600 mt-1">Welcome back, Abebe! Here's your savings overview.</p>
+        <p className="text-gray-600 mt-1">
+          Welcome back, {user?.full_name?.split(" ")[0] || "member"}! Here&apos;s your savings overview.
+        </p>
       </div>
 
-      {/* Stats Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           icon={Users}
           label="Active Groups"
-          value={activeGroups.length}
-          iconColor="bg-blue-100 text-blue-600" />
-        
+          value={stats?.groups?.active_groups || 0}
+          iconColor="bg-blue-100 text-blue-600"
+        />
+
         <StatsCard
           icon={DollarSign}
           label="Total Saved"
-          value={`${totalSaved} Birr`}
-          change="+12% this month"
-          iconColor="bg-green-100 text-green-600" />
-        
+          value={`${Number(stats?.payments?.total_contributed || 0)} Birr`}
+          iconColor="bg-green-100 text-green-600"
+        />
+
         <StatsCard
           icon={CreditCard}
           label="Pending Payments"
-          value={pendingPayments.length}
-          iconColor="bg-yellow-100 text-yellow-600" />
-        
+          value={stats?.payments?.pending_payments || 0}
+          iconColor="bg-yellow-100 text-yellow-600"
+        />
+
         <StatsCard
           icon={TrendingUp}
-          label="Total Members"
-          value={activeGroups.reduce((sum, g) => sum + g.members.length, 0)}
-          iconColor="bg-purple-100 text-purple-600" />
-        
+          label="Unread Alerts"
+          value={stats?.unread_notifications || 0}
+          iconColor="bg-purple-100 text-purple-600"
+        />
       </div>
 
-      {/* Active Groups */}
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-semibold text-gray-900">Your Active Groups</h2>
@@ -59,44 +110,43 @@ export function DashboardPage() {
           </Link>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {activeGroups.slice(0, 3).map((group) => {
-            const progress = group.currentRound / group.totalRounds * 100;
-            return (
-              <GroupCard
-                key={group.id}
-                id={group.id}
-                name={group.name}
-                members={group.members.length}
-                maxMembers={group.maxMembers}
-                contributionAmount={group.contributionAmount}
-                progress={progress}
-                admin={group.admin}
-                status={group.status} />);
-
-
-          })}
+          {activeGroups.slice(0, 3).map((group) => (
+            <GroupCard
+              key={group.id}
+              id={group.id}
+              name={group.name}
+              members={group.member_count}
+              maxMembers={group.max_members}
+              contributionAmount={Number(group.contribution_amount)}
+              progress={group.progress_percentage}
+              admin={group.admin_name || group.creator_name}
+              status={group.display_status}
+              frequency={group.frequency}
+              isMember
+            />
+          ))}
         </div>
       </div>
 
-      {/* Upcoming Payments and Notifications */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Upcoming Payments */}
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Payments</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {pendingPayments.length === 0 ?
-            <p className="text-gray-500 text-center py-4">No pending payments</p> :
-
-            pendingPayments.map((payment) =>
-            <div
-              key={payment.id}
-              className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              
+            {pendingPayments.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No pending payments</p>
+            ) : (
+              pendingPayments.map((payment) => (
+                <div
+                  key={payment.id}
+                  className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+                >
                   <div>
-                    <p className="font-medium">{payment.groupName}</p>
-                    <p className="text-sm text-gray-600">Due: May 1, 2026</p>
+                    <p className="font-medium">{payment.group_name}</p>
+                    <p className="text-sm text-gray-600">
+                      Round {payment.round_number} - Due: {payment.due_date || "Soon"}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-[#1E3A8A]">{payment.amount} Birr</p>
@@ -107,28 +157,31 @@ export function DashboardPage() {
                     </Link>
                   </div>
                 </div>
-            )
-            }
+              ))
+            )}
           </CardContent>
         </Card>
 
-        {/* Notifications */}
         <Card>
           <CardHeader>
             <CardTitle>Recent Notifications</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {mockNotifications.slice(0, 3).map((notification) =>
-            <NotificationCard
-              key={notification.id}
-              type={notification.type}
-              message={notification.message}
-              timestamp={notification.timestamp} />
-
+            {notifications.length === 0 ? (
+              <p className="text-gray-500 text-center py-4">No notifications yet</p>
+            ) : (
+              notifications.slice(0, 3).map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  type={notification.type}
+                  message={notification.message}
+                  timestamp={new Date(notification.created_at).toLocaleString()}
+                />
+              ))
             )}
           </CardContent>
         </Card>
       </div>
-    </div>);
-
+    </div>
+  );
 }

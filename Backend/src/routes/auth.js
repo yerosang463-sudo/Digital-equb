@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../config/db');
 const { authenticate } = require('../middleware/auth');
-require('dotenv').config();
+require('../config/env');
 
 // POST /api/auth/register
 router.post(

@@ -11,6 +11,10 @@ const iconMap = {
   success: CheckCircle,
   warning: AlertCircle,
   info: Info,
+  payment_due: AlertCircle,
+  payment_received: CheckCircle,
+  payout: Info,
+  group_update: Info,
   default: Bell
 };
 
@@ -18,12 +22,16 @@ const colorMap = {
   success: "text-green-600 bg-green-100",
   warning: "text-yellow-600 bg-yellow-100",
   info: "text-blue-600 bg-blue-100",
+  payment_due: "text-yellow-600 bg-yellow-100",
+  payment_received: "text-green-600 bg-green-100",
+  payout: "text-blue-600 bg-blue-100",
+  group_update: "text-blue-600 bg-blue-100",
   default: "text-gray-600 bg-gray-100"
 };
 
 export function NotificationCard({ type, message, timestamp }) {
-  const Icon = iconMap[type];
-  const colorClass = colorMap[type];
+  const Icon = iconMap[type] || iconMap.default;
+  const colorClass = colorMap[type] || colorMap.default;
 
   return (
     <Card className="hover:bg-gray-50 transition-colors cursor-pointer">

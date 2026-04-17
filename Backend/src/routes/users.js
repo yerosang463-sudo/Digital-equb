@@ -10,6 +10,7 @@ router.get('/profile', authenticate, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.full_name, u.email, u.phone, u.avatar_url, u.bio, u.created_at,
+        u.notify_payment_reminders, u.notify_winner_announcements, u.notify_new_member_alerts, u.notify_email_updates,
         (SELECT COUNT(*) FROM group_members gm WHERE gm.user_id = u.id) AS groups_count,
         (SELECT COUNT(*) FROM payments p WHERE p.payer_id = u.id AND p.status = 'completed') AS completed_payments
        FROM users u WHERE u.id = ? AND u.is_active = 1`,
@@ -32,6 +33,7 @@ router.put(
   authenticate,
   [
     body('full_name').optional().notEmpty().trim().withMessage('Full name cannot be empty'),
+    body('email').optional().isEmail().normalizeEmail().withMessage('Email must be valid'),
     body('phone').optional().trim(),
     body('bio').optional().trim(),
     body('avatar_url').optional().trim().isURL().withMessage('Avatar URL must be a valid URL'),
@@ -42,10 +44,11 @@ router.put(
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { full_name, phone, bio, avatar_url } = req.body;
+    const { full_name, email, phone, bio, avatar_url } = req.body;
 
     const updates = {};
     if (full_name !== undefined) updates.full_name = full_name;
+    if (email !== undefined) updates.email = email;
     if (phone !== undefined) updates.phone = phone;
     if (bio !== undefined) updates.bio = bio;
     if (avatar_url !== undefined) updates.avatar_url = avatar_url;
@@ -55,16 +58,86 @@ router.put(
     }
 
     try {
+      if (email !== undefined) {
+        const [existing] = await pool.query(
+          'SELECT id FROM users WHERE email = ? AND id <> ?',
+          [email, req.user.id]
+        );
+
+        if (existing.length > 0) {
+          return res.status(409).json({ success: false, message: 'Email already in use' });
+        }
+      }
+
       const fields = Object.keys(updates).map(k => `${k} = ?`).join(', ');
       const values = [...Object.values(updates), req.user.id];
       await pool.query(`UPDATE users SET ${fields} WHERE id = ?`, values);
 
       const [rows] = await pool.query(
-        'SELECT id, full_name, email, phone, avatar_url, bio, created_at FROM users WHERE id = ?',
+        `SELECT id, full_name, email, phone, avatar_url, bio, created_at,
+          notify_payment_reminders, notify_winner_announcements, notify_new_member_alerts, notify_email_updates
+         FROM users WHERE id = ?`,
         [req.user.id]
       );
 
       res.json({ success: true, message: 'Profile updated successfully', user: rows[0] });
+    } catch (err) {
+      next(err);
+    }
+  }
+);
+
+// PUT /api/users/profile/preferences
+router.put(
+  '/profile/preferences',
+  authenticate,
+  [
+    body('notify_payment_reminders').optional().isBoolean(),
+    body('notify_winner_announcements').optional().isBoolean(),
+    body('notify_new_member_alerts').optional().isBoolean(),
+    body('notify_email_updates').optional().isBoolean(),
+  ],
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const {
+      notify_payment_reminders,
+      notify_winner_announcements,
+      notify_new_member_alerts,
+      notify_email_updates,
+    } = req.body;
+
+    const updates = {};
+    if (notify_payment_reminders !== undefined) updates.notify_payment_reminders = notify_payment_reminders ? 1 : 0;
+    if (notify_winner_announcements !== undefined) updates.notify_winner_announcements = notify_winner_announcements ? 1 : 0;
+    if (notify_new_member_alerts !== undefined) updates.notify_new_member_alerts = notify_new_member_alerts ? 1 : 0;
+    if (notify_email_updates !== undefined) updates.notify_email_updates = notify_email_updates ? 1 : 0;
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: 'No preferences to update' });
+    }
+
+    try {
+      const fields = Object.keys(updates).map((key) => `${key} = ?`).join(', ');
+      await pool.query(
+        `UPDATE users SET ${fields} WHERE id = ?`,
+        [...Object.values(updates), req.user.id]
+      );
+
+      const [rows] = await pool.query(
+        `SELECT id, notify_payment_reminders, notify_winner_announcements, notify_new_member_alerts, notify_email_updates
+         FROM users WHERE id = ?`,
+        [req.user.id]
+      );
+
+      res.json({
+        success: true,
+        message: 'Notification preferences updated successfully',
+        preferences: rows[0],
+      });
     } catch (err) {
       next(err);
     }

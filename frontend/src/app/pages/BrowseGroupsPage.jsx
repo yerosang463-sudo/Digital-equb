@@ -1,36 +1,94 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Search, Filter } from "lucide-react";
 import { GroupCard } from "../components/GroupCard";
-import { mockGroups } from "../data/mockData";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
 import { Label } from "../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { apiRequest } from "../lib/api";
 
 export function BrowseGroupsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [groups, setGroups] = useState([]);
   const [newGroup, setNewGroup] = useState({
     name: "",
     contributionAmount: "",
     maxMembers: "",
-    frequency: "monthly"
+    frequency: "monthly",
   });
 
-  const filteredGroups = mockGroups.filter((group) => {
-    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === "all" || group.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  useEffect(() => {
+    let ignore = false;
 
-  const handleCreateGroup = () => {
-    // Mock create - in production, this would save to backend
-    console.log("Creating group:", newGroup);
-    setIsCreateModalOpen(false);
-    setNewGroup({ name: "", contributionAmount: "", maxMembers: "", frequency: "monthly" });
-  };
+    async function loadGroups() {
+      try {
+        const response = await apiRequest("/api/groups?limit=100");
+        if (!ignore) {
+          setGroups(response.groups || []);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setGroups([]);
+        }
+      }
+    }
+
+    loadGroups();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  const filteredGroups = useMemo(() => {
+    return groups.filter((group) => {
+      const displayStatus = group.display_status || group.status;
+      const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFilter = filterStatus === "all" || displayStatus === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [groups, searchQuery, filterStatus]);
+
+  async function handleCreateGroup() {
+    if (!newGroup.name || !newGroup.contributionAmount || !newGroup.maxMembers) {
+      window.alert("Please fill in all required group fields.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const response = await apiRequest("/api/groups", {
+        method: "POST",
+        body: {
+          name: newGroup.name,
+          contribution_amount: Number(newGroup.contributionAmount),
+          max_members: Number(newGroup.maxMembers),
+          frequency: newGroup.frequency,
+          winner_selection_mode: "random",
+          auto_select_winner: true,
+        },
+      });
+
+      setGroups((current) => [response.group, ...current]);
+      setIsCreateModalOpen(false);
+      setNewGroup({ name: "", contributionAmount: "", maxMembers: "", frequency: "monthly" });
+    } catch (error) {
+      window.alert(error.message);
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -50,7 +108,7 @@ export function BrowseGroupsPage() {
             <DialogHeader>
               <DialogTitle>Create New Group</DialogTitle>
               <DialogDescription>
-                Set up your own Equb group. You'll be the admin and can manage members.
+                Set up your own Equb group. You&apos;ll be the admin and can manage members.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
@@ -60,18 +118,18 @@ export function BrowseGroupsPage() {
                   id="groupName"
                   placeholder="Family Savings Circle"
                   value={newGroup.name}
-                  onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })} />
-                
+                  onChange={(event) => setNewGroup({ ...newGroup, name: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="contribution">Monthly Contribution (Birr)</Label>
+                <Label htmlFor="contribution">Contribution (Birr)</Label>
                 <Input
                   id="contribution"
                   type="number"
                   placeholder="500"
                   value={newGroup.contributionAmount}
-                  onChange={(e) => setNewGroup({ ...newGroup, contributionAmount: e.target.value })} />
-                
+                  onChange={(event) => setNewGroup({ ...newGroup, contributionAmount: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="maxMembers">Maximum Members</Label>
@@ -80,24 +138,29 @@ export function BrowseGroupsPage() {
                   type="number"
                   placeholder="10"
                   value={newGroup.maxMembers}
-                  onChange={(e) => setNewGroup({ ...newGroup, maxMembers: e.target.value })} />
-                
+                  onChange={(event) => setNewGroup({ ...newGroup, maxMembers: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="frequency">Payment Frequency</Label>
-                <Select value={newGroup.frequency} onValueChange={(value) => setNewGroup({ ...newGroup, frequency: value })}>
+                <Select
+                  value={newGroup.frequency}
+                  onValueChange={(value) => setNewGroup({ ...newGroup, frequency: value })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="weekly">Weekly</SelectItem>
+                    <SelectItem value="biweekly">Biweekly</SelectItem>
                     <SelectItem value="monthly">Monthly</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-gray-700">
-                  ℹ️ As the group creator, you'll become the admin and can manage settings, select winners, and send reminders.
+                  As the group creator, you&apos;ll be the admin and the backend will automatically support random
+                  winner selection and simulated Telebirr payments.
                 </p>
               </div>
             </div>
@@ -105,15 +168,14 @@ export function BrowseGroupsPage() {
               <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
                 Cancel
               </Button>
-              <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleCreateGroup}>
-                Create Group
+              <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleCreateGroup} disabled={isSaving}>
+                {isSaving ? "Creating..." : "Create Group"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Search and Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -121,8 +183,8 @@ export function BrowseGroupsPage() {
             placeholder="Search groups..."
             className="pl-10"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)} />
-          
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
         </div>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="w-full sm:w-48">
@@ -131,37 +193,37 @@ export function BrowseGroupsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Groups</SelectItem>
+            <SelectItem value="open">Open</SelectItem>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="full">Full</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {/* Groups Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredGroups.map((group) => {
-          const progress = group.currentRound / group.totalRounds * 100;
-          return (
-            <GroupCard
-              key={group.id}
-              id={group.id}
-              name={group.name}
-              members={group.members.length}
-              maxMembers={group.maxMembers}
-              contributionAmount={group.contributionAmount}
-              progress={progress}
-              admin={group.admin}
-              status={group.status} />);
-
-
-        })}
+        {filteredGroups.map((group) => (
+          <GroupCard
+            key={group.id}
+            id={group.id}
+            name={group.name}
+            members={group.member_count}
+            maxMembers={group.max_members}
+            contributionAmount={Number(group.contribution_amount)}
+            progress={group.progress_percentage}
+            admin={group.admin_name || group.creator_name}
+            status={group.display_status}
+            frequency={group.frequency}
+            isMember={Boolean(group.is_member)}
+          />
+        ))}
       </div>
 
-      {filteredGroups.length === 0 &&
-      <div className="text-center py-12">
+      {filteredGroups.length === 0 ? (
+        <div className="text-center py-12">
           <p className="text-gray-500">No groups found matching your criteria.</p>
         </div>
-      }
-    </div>);
-
+      ) : null}
+    </div>
+  );
 }

@@ -1,59 +1,201 @@
-import { useParams } from "react-router";
-import { mockGroups, currentUser } from "../data/mockData";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router";
+import {
+  Crown,
+  Users,
+  DollarSign,
+  Calendar,
+  Award,
+  Bell,
+  Settings,
+  UserMinus,
+  FileText,
+  CheckCircle,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
-import { Crown, Users, DollarSign, Calendar, Award, Bell, Settings, UserMinus, FileText, CheckCircle } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { apiRequest } from "../lib/api";
+
+function initials(name) {
+  return (name || "User")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function formatDate(dateValue) {
+  if (!dateValue) {
+    return "Not scheduled";
+  }
+
+  return new Date(dateValue).toLocaleDateString();
+}
 
 export function GroupDetailPage() {
   const { groupId } = useParams();
-  const group = mockGroups.find((g) => g.id === groupId);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [details, setDetails] = useState(null);
+  const [busyAction, setBusyAction] = useState("");
 
-  if (!group) {
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadGroup() {
+      try {
+        const response = await apiRequest(`/api/groups/${groupId}`);
+        if (!ignore) {
+          setDetails(response);
+        }
+      } catch (error) {
+        if (!ignore) {
+          setDetails(null);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadGroup();
+    return () => {
+      ignore = true;
+    };
+  }, [groupId]);
+
+  async function refreshGroup() {
+    const response = await apiRequest(`/api/groups/${groupId}`);
+    setDetails(response);
+  }
+
+  async function runAction(actionKey, callback) {
+    setBusyAction(actionKey);
+    try {
+      await callback();
+      await refreshGroup();
+    } catch (error) {
+      window.alert(error.message);
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  if (loading) {
+    return <div className="text-gray-600">Loading group details...</div>;
+  }
+
+  if (!details?.group) {
     return (
       <div className="text-center py-12">
         <p className="text-gray-500">Group not found</p>
-      </div>);
-
+      </div>
+    );
   }
 
-  const isAdmin = group.admin === currentUser.name;
-  const progress = group.currentRound / group.totalRounds * 100;
-  const paidMembers = group.members.filter((m) => m.hasPaid).length;
+  const { group, members = [], report = {} } = details;
+  const isAdmin = group.my_role === "admin";
+  const isMember = Boolean(group.my_role);
+  const paidMembers = members.filter((member) => member.has_paid_current_round).length;
+  const allMembersPaid = members.length > 0 && paidMembers === members.length;
+  const latestWinnerName = group.latest_winner_name || group.current_winner_name;
+  const latestWinnerRound = group.latest_winner_round_number;
+
+  async function handleJoinGroup() {
+    await runAction("join", async () => {
+      await apiRequest(`/api/groups/${groupId}/join`, { method: "POST" });
+    });
+  }
+
+  async function handleSelectWinner() {
+    await runAction("selectWinner", async () => {
+      await apiRequest(`/api/groups/${groupId}/winner/select`, { method: "POST", body: {} });
+    });
+  }
+
+  async function handleSendReminder() {
+    await runAction("sendReminder", async () => {
+      const response = await apiRequest(`/api/groups/${groupId}/reminders`, { method: "POST" });
+      window.alert(response.message);
+    });
+  }
+
+  async function handleCloseRound() {
+    await runAction("closeRound", async () => {
+      const response = await apiRequest(`/api/groups/${groupId}/round/close`, { method: "POST" });
+      window.alert(response.message);
+    });
+  }
+
+  async function handleToggleGroupStatus() {
+    const nextStatus = group.status === "open" ? "active" : "open";
+    await runAction("settings", async () => {
+      await apiRequest(`/api/groups/${groupId}`, {
+        method: "PUT",
+        body: {
+          status: nextStatus,
+          auto_select_winner: group.auto_select_winner ? false : true,
+          winner_selection_mode: group.auto_select_winner ? "manual" : "random",
+        },
+      });
+    });
+  }
+
+  async function handleRemoveMember(userId) {
+    if (!window.confirm("Remove this member from the group?")) {
+      return;
+    }
+
+    await runAction(`remove-${userId}`, async () => {
+      await apiRequest(`/api/groups/${groupId}/members/${userId}`, { method: "DELETE" });
+    });
+  }
+
+  async function handleViewReport() {
+    try {
+      const response = await apiRequest(`/api/groups/${groupId}/report`);
+      window.alert(
+        `Collected: ${response.report.total_collected} Birr\nPaid out: ${response.report.total_paid_out} Birr\nPending payments: ${response.report.pending_payments}`
+      );
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white rounded-lg p-8">
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold mb-2">{group.name}</h1>
-            <p className="text-blue-100 flex items-center gap-2">
+            <p className="text-blue-100 flex items-center gap-2 flex-wrap">
               <Crown className="w-4 h-4" />
-              Admin: {group.admin}
-              {isAdmin && <Badge className="ml-2 bg-yellow-500 text-gray-900">You are admin</Badge>}
+              Admin: {group.admin_name || group.creator_name}
+              {isAdmin ? <Badge className="ml-2 bg-yellow-500 text-gray-900">You are admin</Badge> : null}
             </p>
           </div>
           <div className="text-right">
             <p className="text-blue-100 text-sm">Round Progress</p>
             <p className="text-2xl font-bold">
-              {group.currentRound} / {group.totalRounds}
+              {group.current_round_number || 0} / {group.total_rounds || group.max_members}
             </p>
           </div>
         </div>
         <div className="mt-6">
-          <Progress value={progress} className="h-3 bg-blue-900" />
+          <Progress value={group.progress_percentage || 0} className="h-3 bg-blue-900" />
           <div className="flex justify-between text-sm mt-2 text-blue-100">
-            <span>{progress.toFixed(0)}% Complete</span>
-            <span>{group.totalRounds - group.currentRound} rounds remaining</span>
+            <span>{group.progress_percentage || 0}% Complete</span>
+            <span>{Math.max((group.total_rounds || 0) - (group.current_round_number || 0), 0)} rounds remaining</span>
           </div>
         </div>
       </div>
 
-      {/* Key Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardContent className="p-6">
@@ -64,7 +206,7 @@ export function GroupDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">Members</p>
                 <p className="text-2xl font-bold">
-                  {group.members.length}/{group.maxMembers}
+                  {group.member_count}/{group.max_members}
                 </p>
               </div>
             </div>
@@ -77,8 +219,8 @@ export function GroupDetailPage() {
                 <DollarSign className="w-6 h-6" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Monthly Pool</p>
-                <p className="text-2xl font-bold">{group.contributionAmount * group.members.length} Birr</p>
+                <p className="text-sm text-gray-600">Round Pool</p>
+                <p className="text-2xl font-bold">{Number(group.contribution_amount) * Number(group.member_count)} Birr</p>
               </div>
             </div>
           </CardContent>
@@ -91,7 +233,7 @@ export function GroupDetailPage() {
               </div>
               <div>
                 <p className="text-sm text-gray-600">Next Payment</p>
-                <p className="text-lg font-bold">May 1, 2026</p>
+                <p className="text-lg font-bold">{formatDate(group.next_payment_date)}</p>
               </div>
             </div>
           </CardContent>
@@ -105,7 +247,7 @@ export function GroupDetailPage() {
               <div>
                 <p className="text-sm text-gray-600">Paid This Round</p>
                 <p className="text-2xl font-bold">
-                  {paidMembers}/{group.members.length}
+                  {paidMembers}/{members.length}
                 </p>
               </div>
             </div>
@@ -113,32 +255,33 @@ export function GroupDetailPage() {
         </Card>
       </div>
 
-      {/* Current Winner */}
-      {group.currentWinner &&
-      <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
+      {latestWinnerName ? (
+        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
           <CardContent className="p-6">
             <div className="flex items-center gap-4">
               <div className="p-4 bg-yellow-400 rounded-full">
                 <Award className="w-8 h-8 text-gray-900" />
               </div>
               <div>
-                <p className="text-sm text-gray-600 mb-1">Current Round Winner</p>
-                <p className="text-2xl font-bold text-gray-900">{group.currentWinner}</p>
+                <p className="text-sm text-gray-600 mb-1">
+                  {latestWinnerRound ? `Round ${latestWinnerRound} Winner` : "Latest Winner"}
+                </p>
+                <p className="text-2xl font-bold text-gray-900">{latestWinnerName}</p>
                 <p className="text-sm text-gray-600 mt-1">
-                  Receiving {group.contributionAmount * group.members.length} Birr this round
+                  Received {Number(group.contribution_amount) * Number(group.member_count)} Birr
+                  {group.current_round_number ? ` and round ${group.current_round_number} is now active.` : "."}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-      }
+      ) : null}
 
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Members Section */}
         <div className="md:col-span-2">
           <Card>
             <CardHeader>
-              <CardTitle>Members ({group.members.length})</CardTitle>
+              <CardTitle>Members ({members.length})</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
@@ -151,42 +294,55 @@ export function GroupDetailPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {group.members.map((member) =>
-                  <TableRow key={member.id}>
+                  {members.map((member) => (
+                    <TableRow key={member.user_id}>
                       <TableCell>
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarFallback className="bg-[#1E3A8A] text-white">
-                              {member.name.split(" ").map((n) => n[0]).join("")}
+                              {initials(member.full_name)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{member.name}</p>
-                            {member.isAdmin && <span className="text-xs text-gray-500">👑 Admin</span>}
+                            <p className="font-medium">{member.full_name}</p>
+                            {member.role === "admin" ? <span className="text-xs text-gray-500">Admin</span> : null}
                           </div>
                         </div>
                       </TableCell>
                       <TableCell className="text-gray-600">{member.phone}</TableCell>
-                      <TableCell className="text-gray-600">{member.joinedAt}</TableCell>
+                      <TableCell className="text-gray-600">
+                        {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : "-"}
+                      </TableCell>
                       <TableCell className="text-right">
-                        {member.hasPaid ?
-                      <Badge className="bg-green-100 text-green-800">Paid</Badge> :
-
-                      <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
-                      }
+                        <div className="flex items-center justify-end gap-2">
+                          {member.has_paid_current_round ? (
+                            <Badge className="bg-green-100 text-green-800">Paid</Badge>
+                          ) : (
+                            <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                          )}
+                          {isAdmin && member.role !== "admin" ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRemoveMember(member.user_id)}
+                              disabled={busyAction === `remove-${member.user_id}`}
+                            >
+                              Remove
+                            </Button>
+                          ) : null}
+                        </div>
                       </TableCell>
                     </TableRow>
-                  )}
+                  ))}
                 </TableBody>
               </Table>
             </CardContent>
           </Card>
         </div>
 
-        {/* Admin Controls */}
         <div>
-          {isAdmin ?
-          <Card>
+          {isAdmin ? (
+            <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-yellow-600" />
@@ -194,58 +350,127 @@ export function GroupDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
+                <Button
+                  className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                  onClick={handleSelectWinner}
+                  disabled={busyAction === "selectWinner" || !allMembersPaid || !details.current_round}
+                >
                   <Award className="w-4 h-4 mr-2" />
-                  Select Winner
+                  {busyAction === "selectWinner" ? "Selecting..." : "Select Random Winner"}
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleSendReminder}
+                  disabled={busyAction === "sendReminder"}
+                >
                   <Bell className="w-4 h-4 mr-2" />
                   Send Reminder
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={handleToggleGroupStatus}
+                  disabled={busyAction === "settings"}
+                >
                   <Settings className="w-4 h-4 mr-2" />
                   Edit Group Settings
                 </Button>
-                <Button variant="outline" className="w-full justify-start">
-                  <UserMinus className="w-4 h-4 mr-2" />
-                  Remove Member
-                </Button>
-                <Button variant="outline" className="w-full justify-start">
+                <Button variant="outline" className="w-full justify-start" onClick={handleViewReport}>
                   <FileText className="w-4 h-4 mr-2" />
                   View Reports
                 </Button>
-                <Button variant="outline" className="w-full justify-start text-red-600 hover:text-red-700">
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  Close Round
-                </Button>
+                <div className="rounded-lg border border-dashed border-gray-300 p-3 text-sm text-gray-600">
+                  {allMembersPaid
+                    ? "All members have paid. Selecting a winner will finish this round and automatically open the next one."
+                    : "Winner selection unlocks after all members complete payment for the current round."}
+                </div>
               </CardContent>
-            </Card> :
-
-          <Card>
+            </Card>
+          ) : (
+            <Card>
               <CardHeader>
                 <CardTitle>Group Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <p className="text-sm text-gray-600">Contribution Amount</p>
-                  <p className="text-lg font-semibold">{group.contributionAmount} Birr</p>
+                  <p className="text-lg font-semibold">{group.contribution_amount} Birr</p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-600">Frequency</p>
                   <p className="text-lg font-semibold capitalize">{group.frequency}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600">Created</p>
-                  <p className="text-lg font-semibold">{group.createdAt}</p>
+                  <p className="text-sm text-gray-600">Status</p>
+                  <p className="text-lg font-semibold capitalize">{group.display_status || group.status}</p>
                 </div>
-                <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
-                  Make Payment
-                </Button>
+                {!isMember ? (
+                  <Button
+                    className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                    onClick={handleJoinGroup}
+                    disabled={busyAction === "join" || group.status !== "open"}
+                  >
+                    {busyAction === "join" ? "Joining..." : "Join Group"}
+                  </Button>
+                ) : (
+                  <Button
+                    className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                    onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
+                  >
+                    Make Payment
+                  </Button>
+                )}
               </CardContent>
             </Card>
-          }
+          )}
+
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Group Snapshot</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-gray-700">
+              <div className="flex justify-between">
+                <span>Total collected</span>
+                <span className="font-semibold">{report.total_collected || 0} Birr</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Pending payments</span>
+                <span className="font-semibold">{report.pending_payments || 0}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Paid out</span>
+                <span className="font-semibold">{report.total_paid_out || 0} Birr</span>
+              </div>
+            </CardContent>
+          </Card>
+
+          {details.payouts?.length ? (
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Winner History</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {details.payouts
+                  .slice()
+                  .reverse()
+                  .map((payout) => (
+                    <div key={payout.id} className="flex items-center justify-between border-b last:border-b-0 pb-3 last:pb-0">
+                      <div>
+                        <p className="font-medium">Round {payout.round_number}</p>
+                        <p className="text-sm text-gray-600">{payout.recipient_name}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-semibold">{payout.amount} Birr</p>
+                        <p className="text-xs text-gray-500 capitalize">{payout.status}</p>
+                      </div>
+                    </div>
+                  ))}
+              </CardContent>
+            </Card>
+          ) : null}
         </div>
       </div>
-    </div>);
-
+    </div>
+  );
 }

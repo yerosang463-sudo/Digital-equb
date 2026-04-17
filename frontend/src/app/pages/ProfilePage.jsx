@@ -1,37 +1,130 @@
-import { useState } from "react";
-import { currentUser } from "../data/mockData";
+import { useEffect, useState } from "react";
+import { User, Lock, Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { User, Lock, Bell } from "lucide-react";
+import { apiRequest } from "../lib/api";
+import { useAuth } from "../providers/AuthProvider";
+
+function initials(name) {
+  return (name || "User")
+    .split(" ")
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
 
 export function ProfilePage() {
-  const [profile, setProfile] = useState(currentUser);
+  const { setUser } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    created_at: "",
+    notify_payment_reminders: true,
+    notify_winner_announcements: true,
+    notify_new_member_alerts: false,
+    notify_email_updates: true,
+  });
   const [passwords, setPasswords] = useState({
     current: "",
     new: "",
-    confirm: ""
+    confirm: "",
   });
 
-  const handleUpdateProfile = () => {
-    // Mock update - in production, this would save to backend
-    console.log("Updating profile:", profile);
-    alert("Profile updated successfully!");
-  };
+  useEffect(() => {
+    let ignore = false;
 
-  const handleChangePassword = () => {
+    async function loadProfile() {
+      try {
+        const response = await apiRequest("/api/users/profile");
+        if (!ignore) {
+          setProfile(response.user);
+          setUser(response.user);
+        }
+      } catch (error) {
+        if (!ignore) {
+          window.alert(error.message);
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadProfile();
+    return () => {
+      ignore = true;
+    };
+  }, [setUser]);
+
+  async function handleUpdateProfile() {
+    try {
+      const response = await apiRequest("/api/users/profile", {
+        method: "PUT",
+        body: {
+          full_name: profile.full_name,
+          email: profile.email,
+          phone: profile.phone,
+        },
+      });
+      setProfile((current) => ({ ...current, ...response.user }));
+      setUser(response.user);
+      window.alert("Profile updated successfully!");
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
+  async function handleChangePassword() {
     if (passwords.new !== passwords.confirm) {
-      alert("New passwords don't match!");
+      window.alert("New passwords do not match.");
       return;
     }
-    // Mock update - in production, this would save to backend
-    console.log("Changing password");
-    alert("Password changed successfully!");
-    setPasswords({ current: "", new: "", confirm: "" });
-  };
+
+    try {
+      await apiRequest("/api/users/change-password", {
+        method: "PUT",
+        body: {
+          current_password: passwords.current,
+          new_password: passwords.new,
+        },
+      });
+      setPasswords({ current: "", new: "", confirm: "" });
+      window.alert("Password changed successfully!");
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
+  async function handleSavePreferences() {
+    try {
+      const response = await apiRequest("/api/users/profile/preferences", {
+        method: "PUT",
+        body: {
+          notify_payment_reminders: Boolean(profile.notify_payment_reminders),
+          notify_winner_announcements: Boolean(profile.notify_winner_announcements),
+          notify_new_member_alerts: Boolean(profile.notify_new_member_alerts),
+          notify_email_updates: Boolean(profile.notify_email_updates),
+        },
+      });
+
+      setProfile((current) => ({ ...current, ...response.preferences }));
+      window.alert("Notification preferences updated!");
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
+  if (loading) {
+    return <div className="text-gray-600">Loading profile...</div>;
+  }
 
   return (
     <div className="space-y-8 max-w-4xl">
@@ -43,13 +136,15 @@ export function ProfilePage() {
       <div className="flex items-center gap-6 p-6 bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] rounded-lg text-white">
         <Avatar className="w-24 h-24">
           <AvatarFallback className="bg-white text-[#1E3A8A] text-3xl">
-            {profile.name.split(" ").map((n) => n[0]).join("")}
+            {initials(profile.full_name)}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold">{profile.name}</h2>
+          <h2 className="text-2xl font-bold">{profile.full_name}</h2>
           <p className="text-blue-100">{profile.email}</p>
-          <p className="text-blue-100 text-sm mt-1">Member since {profile.joinedAt}</p>
+          <p className="text-blue-100 text-sm mt-1">
+            Member since {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : "-"}
+          </p>
         </div>
       </div>
 
@@ -79,9 +174,9 @@ export function ProfilePage() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={profile.name}
-                  onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
-                
+                  value={profile.full_name}
+                  onChange={(event) => setProfile({ ...profile, full_name: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -89,17 +184,17 @@ export function ProfilePage() {
                   id="email"
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
-                
+                  onChange={(event) => setProfile({ ...profile, email: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
                   id="phone"
                   type="tel"
-                  value={profile.phone}
-                  onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
-                
+                  value={profile.phone || ""}
+                  onChange={(event) => setProfile({ ...profile, phone: event.target.value })}
+                />
               </div>
               <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleUpdateProfile}>
                 Save Changes
@@ -120,8 +215,8 @@ export function ProfilePage() {
                   id="currentPassword"
                   type="password"
                   value={passwords.current}
-                  onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} />
-                
+                  onChange={(event) => setPasswords({ ...passwords, current: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="newPassword">New Password</Label>
@@ -129,8 +224,8 @@ export function ProfilePage() {
                   id="newPassword"
                   type="password"
                   value={passwords.new}
-                  onChange={(e) => setPasswords({ ...passwords, new: e.target.value })} />
-                
+                  onChange={(event) => setPasswords({ ...passwords, new: event.target.value })}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm New Password</Label>
@@ -138,8 +233,8 @@ export function ProfilePage() {
                   id="confirmPassword"
                   type="password"
                   value={passwords.confirm}
-                  onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })} />
-                
+                  onChange={(event) => setPasswords({ ...passwords, confirm: event.target.value })}
+                />
               </div>
               <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleChangePassword}>
                 Update Password
@@ -159,36 +254,64 @@ export function ProfilePage() {
                   <p className="font-medium">Payment Reminders</p>
                   <p className="text-sm text-gray-500">Get notified before payment due dates</p>
                 </div>
-                <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded"
+                  checked={Boolean(profile.notify_payment_reminders)}
+                  onChange={(event) =>
+                    setProfile({ ...profile, notify_payment_reminders: event.target.checked })
+                  }
+                />
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">Winner Announcements</p>
                   <p className="text-sm text-gray-500">Notifications when winners are selected</p>
                 </div>
-                <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded"
+                  checked={Boolean(profile.notify_winner_announcements)}
+                  onChange={(event) =>
+                    setProfile({ ...profile, notify_winner_announcements: event.target.checked })
+                  }
+                />
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">New Member Alerts</p>
                   <p className="text-sm text-gray-500">When someone joins your groups</p>
                 </div>
-                <input type="checkbox" className="w-5 h-5 rounded" />
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded"
+                  checked={Boolean(profile.notify_new_member_alerts)}
+                  onChange={(event) =>
+                    setProfile({ ...profile, notify_new_member_alerts: event.target.checked })
+                  }
+                />
               </div>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">Email Notifications</p>
                   <p className="text-sm text-gray-500">Receive updates via email</p>
                 </div>
-                <input type="checkbox" className="w-5 h-5 rounded" defaultChecked />
+                <input
+                  type="checkbox"
+                  className="w-5 h-5 rounded"
+                  checked={Boolean(profile.notify_email_updates)}
+                  onChange={(event) =>
+                    setProfile({ ...profile, notify_email_updates: event.target.checked })
+                  }
+                />
               </div>
-              <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">
+              <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleSavePreferences}>
                 Save Preferences
               </Button>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
-    </div>);
-
+    </div>
+  );
 }
