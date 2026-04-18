@@ -1,6 +1,17 @@
 -- Sample seed data for Digital Equb
 USE `digital-equb`;
 
+-- Clear existing data to avoid duplicate errors
+SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE notifications;
+TRUNCATE TABLE payouts;
+TRUNCATE TABLE payments;
+TRUNCATE TABLE equb_rounds;
+TRUNCATE TABLE group_members;
+TRUNCATE TABLE equb_groups;
+TRUNCATE TABLE users;
+SET FOREIGN_KEY_CHECKS = 1;
+
 -- Sample users (password for all: password123)
 -- Keeping only 2 users
 INSERT INTO users (full_name, email, phone, password_hash, bio) VALUES
