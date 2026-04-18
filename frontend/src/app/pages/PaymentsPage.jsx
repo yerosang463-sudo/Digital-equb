@@ -139,6 +139,9 @@ export function PaymentsPage() {
             <div className="text-center py-8 text-gray-500">
               <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
               <p>All caught up! No pending payments.</p>
+              <p className="text-sm mt-3 text-gray-400 max-w-sm mx-auto">
+                If your group is relatively new and still waiting for members to join, your payment will automatically appear here once Round 1 actually begins.
+              </p>
             </div>
           ) : (
             <div className="space-y-4">

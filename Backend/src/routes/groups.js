@@ -11,6 +11,7 @@ const {
   getCurrentRound,
   getGroupById,
   getGroupMembers,
+  createRound,
   selectWinnerForRound,
   sendRoundReminders,
   closeCurrentRound,
@@ -104,6 +105,11 @@ async function fetchGroupDetails(groupId, userId) {
     currentRound = await ensureCurrentRound(pool, groupId);
   } else if (group.current_round_id) {
     currentRound = await getCurrentRound(pool, groupId);
+  }
+
+  if (group.status === 'open' && !currentRound) {
+    const dbGroup = await getGroupById(pool, groupId);
+    currentRound = await createRound(pool, dbGroup, 1);
   }
 
   if (currentRound) {
@@ -385,6 +391,9 @@ router.post(
         [result.insertId, req.user.id]
       );
 
+      const groupDataForRound = await getGroupById(conn, result.insertId);
+      await createRound(conn, groupDataForRound, 1);
+
       await conn.commit();
 
       const details = await fetchGroupDetails(result.insertId, req.user.id);
@@ -651,16 +660,18 @@ router.post(
     try {
       await conn.beginTransaction();
 
-      const round = await selectWinnerForRound(conn, {
+      let round = await selectWinnerForRound(conn, {
         groupId: req.params.id,
         selectedByUserId: req.user.id,
         recipientId: req.body.recipient_id ? Number(req.body.recipient_id) : null,
       });
 
-      const closeResult = await closeCurrentRound(conn, {
+      let closeResult = await closeCurrentRound(conn, {
         groupId: req.params.id,
         adminUserId: req.user.id,
       });
+
+
 
       await conn.commit();
 
@@ -729,6 +740,44 @@ router.post('/:id/round/close', authenticate, async (req, res, next) => {
     res.json({
       success: true,
       message: result.groupStatus === 'completed' ? 'Final round closed. Group completed.' : 'Round closed successfully',
+      ...details,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+});
+
+// POST /api/groups/:id/payments/simulate-all - system helper to auto-pay all pending members (Admin only)
+router.post('/:id/payments/simulate-all', authenticate, async (req, res, next) => {
+  const isAdmin = await checkAdmin(req.params.id, req.user.id);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, message: 'Only group admins can use system auto-pay' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const round = await getCurrentRound(conn, req.params.id);
+    if (!round) {
+      await conn.rollback();
+      return res.status(400).json({ success: false, message: 'No active round found to simulate payments for' });
+    }
+
+    await conn.query(
+      `UPDATE payments
+       SET status = 'completed', paid_at = NOW(), payment_method = 'system_auto', notes = 'System admin auto-simulated'
+       WHERE group_id = ? AND round_id = ? AND status = 'pending'`,
+      [req.params.id, round.id]
+    );
+
+    await conn.commit();
+    const details = await fetchGroupDetails(req.params.id, req.user.id);
+    res.json({
+      success: true,
+      message: 'All pending members have been marked as paid.',
       ...details,
     });
   } catch (err) {

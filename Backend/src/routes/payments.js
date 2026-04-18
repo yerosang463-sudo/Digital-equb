@@ -183,17 +183,17 @@ router.post(
     try {
       await conn.beginTransaction();
 
-      const [payments] = await conn.query(
-        `${basePaymentsQuery()} WHERE p.id = ? AND p.payer_id = ? FOR UPDATE`,
+      const [paymentRows] = await conn.query(
+        `SELECT * FROM payments WHERE id = ? AND payer_id = ? FOR UPDATE`,
         [req.params.id, req.user.id]
       );
 
-      if (payments.length === 0) {
+      if (paymentRows.length === 0) {
         await conn.rollback();
         return res.status(404).json({ success: false, message: 'Payment not found' });
       }
 
-      const payment = payments[0];
+      const payment = paymentRows[0];
       if (payment.status === 'completed') {
         await conn.rollback();
         return res.status(400).json({ success: false, message: 'This payment has already been completed' });
@@ -221,11 +221,17 @@ router.post(
         [payment.group_id]
       );
 
+      const [payerUser] = await conn.query(`SELECT full_name FROM users WHERE id = ?`, [payment.payer_id]);
+      const [groupDetails] = await conn.query(`SELECT name FROM equb_groups WHERE id = ?`, [payment.group_id]);
+
+      const payerName = payerUser[0]?.full_name || 'A member';
+      const groupName = groupDetails[0]?.name || 'a group';
+
       for (const admin of admins) {
         await createNotification(conn, {
           userId: admin.user_id,
           title: 'Payment received',
-          message: `${payment.payer_name} completed a Telebirr payment for ${payment.group_name}.`,
+          message: `${payerName} completed a Telebirr payment for ${groupName}.`,
           type: 'payment_received',
           relatedGroupId: payment.group_id,
           relatedPaymentId: payment.id,
@@ -235,7 +241,7 @@ router.post(
       await createNotification(conn, {
         userId: req.user.id,
         title: 'Payment successful',
-        message: `Your Telebirr payment for ${payment.group_name} was completed successfully.`,
+        message: `Your Telebirr payment for ${groupName} was completed successfully.`,
         type: 'payment_received',
         relatedGroupId: payment.group_id,
         relatedPaymentId: payment.id,

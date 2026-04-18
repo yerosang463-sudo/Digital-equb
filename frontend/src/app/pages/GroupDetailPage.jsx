@@ -147,6 +147,13 @@ export function GroupDetailPage() {
     });
   }
 
+  async function handleSimulateAllPayments() {
+    await runAction("simulateAll", async () => {
+      const response = await apiRequest(`/api/groups/${groupId}/payments/simulate-all`, { method: "POST" });
+      window.alert(response.message);
+    });
+  }
+
   async function handleRemoveMember(userId) {
     if (!window.confirm("Remove this member from the group?")) {
       return;
@@ -376,6 +383,17 @@ export function GroupDetailPage() {
                   <Settings className="w-4 h-4 mr-2" />
                   Edit Group Settings
                 </Button>
+                {!allMembersPaid ? (
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-blue-500 text-blue-600 hover:bg-blue-50"
+                    onClick={handleSimulateAllPayments}
+                    disabled={busyAction === "simulateAll" || details.payouts?.length >= group.total_rounds}
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    System: Auto-Pay Pending
+                  </Button>
+                ) : null}
                 <Button variant="outline" className="w-full justify-start" onClick={handleViewReport}>
                   <FileText className="w-4 h-4 mr-2" />
                   View Reports

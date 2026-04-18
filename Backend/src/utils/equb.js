@@ -437,6 +437,7 @@ async function closeCurrentRound(conn, { groupId, adminUserId }) {
 
   const nextRound = await createRound(conn, group, round.round_number + 1);
 
+
   return {
     closedRound: round,
     nextRound,
