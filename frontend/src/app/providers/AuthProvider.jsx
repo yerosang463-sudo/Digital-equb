@@ -81,6 +81,35 @@ export function AuthProvider({ children }) {
     return payload;
   }
 
+  async function loginWithGoogle(credential) {
+    if (!credential) {
+      throw new Error("No Google credential provided");
+    }
+
+    setLoading(true);
+    try {
+      // 1. Decode the JWT token from Google to get the user profile
+      const { jwtDecode } = await import("jwt-decode");
+      const decoded = jwtDecode(credential);
+      
+      // Send the secure ID Token to our backend for verification
+      const payload = await apiRequest("/api/auth/google", {
+        method: "POST",
+        body: { idToken: credential },
+      });
+
+      setStoredAuth(payload.token, payload.user);
+      setToken(payload.token);
+      setUser(payload.user);
+      return payload;
+    } catch (error) {
+      console.error("Google login failed", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function refreshUser() {
     const payload = await apiRequest("/api/auth/me");
     updateUser(payload.user);
@@ -101,6 +130,7 @@ export function AuthProvider({ children }) {
       isAuthenticated: Boolean(token && user),
       login,
       signup,
+      loginWithGoogle,
       logout,
       refreshUser,
       setUser: updateUser,

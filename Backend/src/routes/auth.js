@@ -103,6 +103,77 @@ router.post(
   }
 );
 
+// POST /api/auth/google
+router.post(
+  '/google',
+  [
+    body('idToken').notEmpty().withMessage('ID Token is required'),
+  ],
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { idToken } = req.body;
+
+    try {
+      const { OAuth2Client } = require('google-auth-library');
+      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+      // 1. Verify the Google Token
+      const ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      
+      const payload = ticket.getPayload();
+      const { email, name, picture, sub: google_id } = payload;
+
+      // 2. Check if user already exists
+      let [rows] = await pool.query('SELECT * FROM users WHERE email = ? AND is_active = 1', [email]);
+      let user;
+
+      if (rows.length === 0) {
+        // 3. Create fresh account
+        const [result] = await pool.query(
+          'INSERT INTO users (full_name, email, avatar_url) VALUES (?, ?, ?)',
+          [name, email, picture || null]
+        );
+        const userId = result.insertId;
+        const [newRows] = await pool.query(
+          'SELECT id, full_name, email, phone, avatar_url, bio, created_at FROM users WHERE id = ?',
+          [userId]
+        );
+        user = newRows[0];
+      } else {
+        // 4. Update existing account avatar if changed
+        user = rows[0];
+        if (picture && user.avatar_url !== picture) {
+          await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [picture, user.id]);
+          user.avatar_url = picture;
+        }
+      }
+
+      const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+      });
+
+      const { password_hash, ...safeUser } = user;
+
+      res.json({
+        success: true,
+        message: rows.length === 0 ? 'Account created via Google' : 'Login successful',
+        token,
+        user: safeUser,
+      });
+    } catch (err) {
+      console.error('Google verification error:', err);
+      res.status(401).json({ success: false, message: 'Invalid Google token' });
+    }
+  }
+);
+
 // GET /api/auth/me
 router.get('/me', authenticate, async (req, res, next) => {
   try {

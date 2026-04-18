@@ -86,7 +86,7 @@ export function TopBar() {
 
           <div className="flex items-center gap-3">
             <Avatar>
-              <AvatarImage src={user?.avatar_url || ""} />
+              <AvatarImage src={user?.avatar_url || user?.avatar || ""} />
               <AvatarFallback className="bg-[#1E3A8A] text-white">
                 {initials(user?.full_name)}
               </AvatarFallback>
