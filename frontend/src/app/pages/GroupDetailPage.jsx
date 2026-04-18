@@ -175,8 +175,74 @@ export function GroupDetailPage() {
     }
   }
 
+  async function handleRestartCycle() {
+    if (!window.confirm("Restart a new payment cycle from Round 1? All members will need to pay again.")) {
+      return;
+    }
+    await runAction("restartCycle", async () => {
+      await apiRequest(`/api/groups/${groupId}/restart-cycle`, { method: "POST" });
+    });
+  }
+
+  async function handleCloseGroup() {
+    if (!window.confirm("Permanently close this group? This action cannot be undone.")) {
+      return;
+    }
+    await runAction("closeGroup", async () => {
+      await apiRequest(`/api/groups/${groupId}/close`, { method: "POST" });
+    });
+  }
+
   return (
     <div className="space-y-8">
+
+      {/* ── Cycle Completed Banner ─────────────────────────────────── */}
+      {group.status === "completed" && isAdmin ? (
+        <div className="rounded-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-orange-50 p-8">
+          <div className="flex flex-col items-center text-center gap-4">
+            <div className="text-5xl">🏆</div>
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">All Rounds Completed!</h2>
+              <p className="text-gray-600 mt-1">
+                Every member has received a payout. What would you like to do next?
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-2">
+              <Button
+                className="flex-1 bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-6 text-base"
+                onClick={handleRestartCycle}
+                disabled={busyAction === "restartCycle"}
+              >
+                {busyAction === "restartCycle" ? (
+                  "Restarting..."
+                ) : (
+                  <>
+                    <span className="mr-2">🔄</span>
+                    Start New Cycle (Round 1)
+                  </>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 border-red-400 text-red-600 hover:bg-red-50 py-6 text-base"
+                onClick={handleCloseGroup}
+                disabled={busyAction === "closeGroup"}
+              >
+                {busyAction === "closeGroup" ? (
+                  "Closing..."
+                ) : (
+                  <>
+                    <span className="mr-2">✅</span>
+                    Close Group (Done)
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* ── Group Header ──────────────────────────────────────────── */}
       <div className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white rounded-lg p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -357,6 +423,16 @@ export function GroupDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                {/* Admin must pay just like other members */}
+                {members.find((m) => m.role === 'admin' && !m.has_paid_current_round) ? (
+                  <Button
+                    className="w-full justify-start bg-green-600 hover:bg-green-700"
+                    onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
+                  >
+                    <DollarSign className="w-4 h-4 mr-2" />
+                    Make My Payment (Round {group.current_round_number || 1})
+                  </Button>
+                ) : null}
                 <Button
                   className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
                   onClick={handleSelectWinner}
@@ -372,7 +448,7 @@ export function GroupDetailPage() {
                   disabled={busyAction === "sendReminder"}
                 >
                   <Bell className="w-4 h-4 mr-2" />
-                  Send Reminder
+                  Send Payment Reminders
                 </Button>
                 <Button
                   variant="outline"
@@ -383,25 +459,14 @@ export function GroupDetailPage() {
                   <Settings className="w-4 h-4 mr-2" />
                   Edit Group Settings
                 </Button>
-                {!allMembersPaid ? (
-                  <Button
-                    variant="outline"
-                    className="w-full justify-start border-blue-500 text-blue-600 hover:bg-blue-50"
-                    onClick={handleSimulateAllPayments}
-                    disabled={busyAction === "simulateAll" || details.payouts?.length >= group.total_rounds}
-                  >
-                    <DollarSign className="w-4 h-4 mr-2" />
-                    System: Auto-Pay Pending
-                  </Button>
-                ) : null}
                 <Button variant="outline" className="w-full justify-start" onClick={handleViewReport}>
                   <FileText className="w-4 h-4 mr-2" />
                   View Reports
                 </Button>
                 <div className="rounded-lg border border-dashed border-gray-300 p-3 text-sm text-gray-600">
                   {allMembersPaid
-                    ? "All members have paid. Selecting a winner will finish this round and automatically open the next one."
-                    : "Winner selection unlocks after all members complete payment for the current round."}
+                    ? "✅ All members have paid. You can now select a winner for this round."
+                    : `⏳ ${paidMembers}/${members.length} members paid. Winner selection unlocks once everyone has paid.`}
                 </div>
               </CardContent>
             </Card>

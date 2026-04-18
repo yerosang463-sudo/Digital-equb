@@ -33,7 +33,7 @@ async function syncUserGroupPayments(userId) {
     `SELECT DISTINCT g.id, g.status
      FROM equb_groups g
      JOIN group_members gm ON gm.group_id = g.id
-     WHERE gm.user_id = ?`,
+     WHERE gm.user_id = ? AND g.status IN ('open', 'active')`,
     [userId]
   );
 
@@ -47,6 +47,7 @@ async function syncUserGroupPayments(userId) {
     if (group.status === 'active') {
       round = await ensureCurrentRound(pool, group.id);
     } else {
+      // For open groups, use the existing round (created at group creation)
       round = await getCurrentRound(pool, group.id);
     }
 

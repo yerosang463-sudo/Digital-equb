@@ -105,11 +105,9 @@ async function fetchGroupDetails(groupId, userId) {
     currentRound = await ensureCurrentRound(pool, groupId);
   } else if (group.current_round_id) {
     currentRound = await getCurrentRound(pool, groupId);
-  }
-
-  if (group.status === 'open' && !currentRound) {
-    const dbGroup = await getGroupById(pool, groupId);
-    currentRound = await createRound(pool, dbGroup, 1);
+  } else {
+    // Open group: find the round even if current_round_id isn't set in the main query
+    currentRound = await getCurrentRound(pool, groupId);
   }
 
   if (currentRound) {
@@ -514,12 +512,34 @@ router.post('/:id/join', authenticate, async (req, res, next) => {
       [nextCount, nextStatus, nextStatus, nextCount, req.params.id]
     );
 
+    // After join: ensure the new member has a payment record for the current round
+    // If group just became active, upgrade the existing open round's status and snapshot member count
     const currentRound = await getCurrentRound(conn, req.params.id);
 
     if (nextStatus === 'active') {
-      await ensureCurrentRound(conn, req.params.id);
+      // Lock in cycle_total_rounds now that all members have joined
+      await conn.query(
+        `UPDATE equb_groups SET cycle_total_rounds = ? WHERE id = ?`,
+        [nextCount, req.params.id]
+      );
+
+      if (!currentRound) {
+        // No open round yet (edge case) — create round 1
+        const freshGroup = await getGroupById(conn, req.params.id);
+        await createRound(conn, freshGroup, 1);
+      } else {
+        // Round 1 already exists — just ensure all members have a payment record
+        const freshGroup = await getGroupById(conn, req.params.id);
+        await ensureRoundPaymentsForMembers(conn, freshGroup, {
+          roundId: currentRound.id,
+          roundNumber: currentRound.round_number,
+          dueDate: currentRound.due_date,
+        });
+      }
     } else if (currentRound) {
-      await ensureRoundPaymentsForMembers(conn, group, {
+      // Group still open — just add a payment record for this specific new member
+      const freshGroup = await getGroupById(conn, req.params.id);
+      await ensureRoundPaymentsForMembers(conn, freshGroup, {
         roundId: currentRound.id,
         roundNumber: currentRound.round_number,
         dueDate: currentRound.due_date,
@@ -780,6 +800,129 @@ router.post('/:id/payments/simulate-all', authenticate, async (req, res, next) =
       message: 'All pending members have been marked as paid.',
       ...details,
     });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+});
+
+// POST /api/groups/:id/restart-cycle - admin restarts a completed group from Round 1
+router.post('/:id/restart-cycle', authenticate, async (req, res, next) => {
+  const isAdmin = await checkAdmin(req.params.id, req.user.id);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, message: 'Only group admins can restart a cycle' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [groupRows] = await conn.query('SELECT * FROM equb_groups WHERE id = ?', [req.params.id]);
+    const group = groupRows[0];
+    if (!group) {
+      await conn.rollback();
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    if (group.status !== 'completed') {
+      await conn.rollback();
+      return res.status(400).json({ success: false, message: 'Only completed groups can be restarted' });
+    }
+
+    // 1. Close any lingering open rounds
+    await conn.query(
+      `UPDATE equb_rounds SET status = 'closed', closed_at = NOW()
+       WHERE group_id = ? AND status IN ('collecting', 'winner_selected')`,
+      [req.params.id]
+    );
+
+    // 2. Reset member payout flags so everyone is eligible again
+    await conn.query(
+      `UPDATE group_members SET has_received_payout = 0, payout_date = NULL WHERE group_id = ?`,
+      [req.params.id]
+    );
+
+    // 3. Reset the group to active with a fresh cycle
+    await conn.query(
+      `UPDATE equb_groups
+       SET status = 'active', cycle_total_rounds = current_members
+       WHERE id = ?`,
+      [req.params.id]
+    );
+
+    // 4. Create fresh Round 1 with pending payments for all members
+    const freshGroup = await getGroupById(conn, req.params.id);
+    await createRound(conn, freshGroup, 1);
+
+    // Notify all members
+    const members = await getGroupMembers(conn, req.params.id);
+    for (const member of members) {
+      await createNotification(conn, {
+        userId: member.user_id,
+        title: 'New cycle started!',
+        message: `The admin has restarted ${group.name}. Round 1 is now open — please make your payment.`,
+        type: 'group_update',
+        relatedGroupId: req.params.id,
+      });
+    }
+
+    await conn.commit();
+    const details = await fetchGroupDetails(req.params.id, req.user.id);
+    res.json({
+      success: true,
+      message: 'Group cycle restarted. Round 1 is now open for payments.',
+      ...details,
+    });
+  } catch (err) {
+    await conn.rollback();
+    next(err);
+  } finally {
+    conn.release();
+  }
+});
+
+// POST /api/groups/:id/close - admin permanently closes a completed group
+router.post('/:id/close', authenticate, async (req, res, next) => {
+  const isAdmin = await checkAdmin(req.params.id, req.user.id);
+  if (!isAdmin) {
+    return res.status(403).json({ success: false, message: 'Only group admins can close a group' });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [groupRows] = await conn.query('SELECT status FROM equb_groups WHERE id = ?', [req.params.id]);
+    const group = groupRows[0];
+    if (!group) {
+      await conn.rollback();
+      return res.status(404).json({ success: false, message: 'Group not found' });
+    }
+
+    if (group.status !== 'completed') {
+      await conn.rollback();
+      return res.status(400).json({ success: false, message: 'Only completed groups can be permanently closed' });
+    }
+
+    await conn.query(`UPDATE equb_groups SET status = 'cancelled' WHERE id = ?`, [req.params.id]);
+
+    // Notify all members
+    const members = await getGroupMembers(conn, req.params.id);
+    for (const member of members) {
+      await createNotification(conn, {
+        userId: member.user_id,
+        title: 'Group closed',
+        message: `The Equb group has been permanently closed by the admin. Thank you for participating!`,
+        type: 'group_update',
+        relatedGroupId: req.params.id,
+      });
+    }
+
+    await conn.commit();
+    const details = await fetchGroupDetails(req.params.id, req.user.id);
+    res.json({ success: true, message: 'Group permanently closed.', ...details });
   } catch (err) {
     await conn.rollback();
     next(err);
