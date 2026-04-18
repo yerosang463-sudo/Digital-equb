@@ -10,6 +10,9 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { login, isAuthenticated } = useAuth();
+  const searchParams = new URLSearchParams(location.search);
+  const isDemoMode = searchParams.get("demo") === "1";
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -19,11 +22,20 @@ export function LoginPage() {
   }
 
   async function handleLogin(event) {
-    event.preventDefault();
-    setSubmitting(true);
+    if (event) event.preventDefault();
+    await performLogin(email, password);
+  }
 
+  async function handleQuickDemo() {
+    setEmail("abebe@example.com");
+    setPassword("password123");
+    await performLogin("abebe@example.com", "password123");
+  }
+
+  async function performLogin(loginEmail, loginPassword) {
+    setSubmitting(true);
     try {
-      await login(email, password);
+      await login(loginEmail, loginPassword);
       navigate(location.state?.from || "/dashboard");
     } catch (error) {
       window.alert(error.message);
@@ -34,7 +46,7 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1E3A8A] to-[#3B82F6] flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
+      <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="space-y-1">
           <Link to="/" className="flex justify-center mb-4 transition-transform hover:scale-105">
             <div className="w-16 h-16 bg-[#1E3A8A] rounded-xl flex items-center justify-center shadow-lg">
@@ -46,6 +58,21 @@ export function LoginPage() {
         </CardHeader>
         <form onSubmit={handleLogin}>
           <CardContent className="space-y-4">
+            {isDemoMode && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-2">
+                <p className="text-sm text-blue-800 font-medium mb-3">
+                  You&apos;re in Demo Mode! Use the button below to see the system instantly.
+                </p>
+                <Button 
+                  type="button"
+                  onClick={handleQuickDemo}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold"
+                  disabled={submitting}
+                >
+                  🚀 Sign in with Demo Account
+                </Button>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input

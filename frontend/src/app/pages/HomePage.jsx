@@ -25,9 +25,11 @@ export function HomePage() {
                   Get Started Free
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg">
-                Watch Demo
-              </Button>
+              <Link to="/login?demo=1">
+                <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-6 text-lg">
+                  Try Live Demo
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
