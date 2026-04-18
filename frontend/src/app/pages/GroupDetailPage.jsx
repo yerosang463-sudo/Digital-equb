@@ -269,134 +269,140 @@ export function GroupDetailPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardContent className="p-6">
+      {/* ── Stats Cards ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
-                <Users className="w-6 h-6" />
+              <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
+                <Users className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Members</p>
-                <p className="text-2xl font-bold">
-                  {group.member_count}/{group.max_members}
-                </p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Members</p>
+                <p className="text-xl font-bold text-gray-900">{group.member_count}/{group.max_members}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 text-green-600 rounded-lg">
-                <DollarSign className="w-6 h-6" />
+              <div className="p-2.5 bg-green-50 text-green-600 rounded-xl">
+                <DollarSign className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Round Pool</p>
-                <p className="text-2xl font-bold">{Number(group.contribution_amount) * Number(group.member_count)} Birr</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Round Pool</p>
+                <p className="text-xl font-bold text-gray-900">{Number(group.contribution_amount) * Number(group.member_count)} Birr</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
-                <Calendar className="w-6 h-6" />
+              <div className="p-2.5 bg-purple-50 text-purple-600 rounded-xl">
+                <Calendar className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Next Payment</p>
-                <p className="text-lg font-bold">{formatDate(group.next_payment_date)}</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Next Payment</p>
+                <p className="text-base font-bold text-gray-900">{formatDate(group.next_payment_date)}</p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="p-6">
+        <Card className="border-0 shadow-sm bg-white">
+          <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="p-3 bg-yellow-100 text-yellow-600 rounded-lg">
-                <CheckCircle className="w-6 h-6" />
+              <div className="p-2.5 bg-yellow-50 text-yellow-600 rounded-xl">
+                <CheckCircle className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-sm text-gray-600">Paid This Round</p>
-                <p className="text-2xl font-bold">
-                  {paidMembers}/{members.length}
-                </p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide">Paid This Round</p>
+                <p className="text-xl font-bold text-gray-900">{paidMembers}/{members.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
+      {/* ── Current Winner Banner ──────────────────────────────────── */}
       {latestWinnerName ? (
-        <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-200">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-4 bg-yellow-400 rounded-full">
-                <Award className="w-8 h-8 text-gray-900" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">
-                  {latestWinnerRound ? `Round ${latestWinnerRound} Winner` : "Latest Winner"}
-                </p>
-                <p className="text-2xl font-bold text-gray-900">{latestWinnerName}</p>
-                <p className="text-sm text-gray-600 mt-1">
-                  Received {Number(group.contribution_amount) * Number(group.member_count)} Birr
-                  {group.current_round_number ? ` and round ${group.current_round_number} is now active.` : "."}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex items-center gap-5 bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-5">
+          <div className="flex-shrink-0 w-14 h-14 bg-yellow-400 rounded-full flex items-center justify-center shadow-md">
+            <Award className="w-7 h-7 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-widest text-yellow-700 mb-0.5">
+              {latestWinnerRound ? `Round ${latestWinnerRound} Winner` : "Latest Winner"}
+            </p>
+            <p className="text-2xl font-bold text-gray-900 truncate">{latestWinnerName}</p>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Received {Number(group.contribution_amount) * Number(group.member_count)} Birr
+              {group.current_round_number ? ` · Round ${group.current_round_number} now active` : ""}
+            </p>
+          </div>
+        </div>
       ) : null}
 
-      <div className="grid md:grid-cols-3 gap-8">
-        <div className="md:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle>Members ({members.length})</CardTitle>
+      {/* ── Main 2-col Layout ─────────────────────────────────────── */}
+      <div className="grid lg:grid-cols-3 gap-6 items-start">
+
+        {/* LEFT — Members + Snapshot + History */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Members Table */}
+          <Card className="border-0 shadow-sm">
+            <CardHeader className="pb-3 border-b">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Users className="w-4 h-4 text-[#1E3A8A]" />
+                Members
+                <Badge className="ml-auto bg-blue-50 text-blue-700 border-blue-200 font-semibold">{members.length}</Badge>
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
+                  <TableRow className="bg-gray-50/70">
+                    <TableHead className="pl-6">Member</TableHead>
                     <TableHead>Phone</TableHead>
                     <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Status</TableHead>
+                    <TableHead className="text-right pr-6">Status</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {members.map((member) => (
-                    <TableRow key={member.user_id}>
-                      <TableCell>
+                    <TableRow key={member.user_id} className="hover:bg-gray-50/50">
+                      <TableCell className="pl-6">
                         <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarFallback className="bg-[#1E3A8A] text-white">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="bg-[#1E3A8A] text-white text-xs font-bold">
                               {initials(member.full_name)}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium">{member.full_name}</p>
-                            {member.role === "admin" ? <span className="text-xs text-gray-500">Admin</span> : null}
+                            <p className="font-medium text-sm text-gray-900">{member.full_name}</p>
+                            {member.role === "admin" ? (
+                              <span className="text-xs text-blue-600 font-medium">Admin</span>
+                            ) : null}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-600">{member.phone}</TableCell>
-                      <TableCell className="text-gray-600">
-                        {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : "-"}
+                      <TableCell className="text-gray-500 text-sm">{member.phone}</TableCell>
+                      <TableCell className="text-gray-500 text-sm">
+                        {member.joined_at ? new Date(member.joined_at).toLocaleDateString() : "—"}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right pr-6">
                         <div className="flex items-center justify-end gap-2">
                           {member.has_paid_current_round ? (
-                            <Badge className="bg-green-100 text-green-800">Paid</Badge>
+                            <Badge className="bg-green-50 text-green-700 border-green-200">✓ Paid</Badge>
                           ) : (
-                            <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>
+                            <Badge className="bg-amber-50 text-amber-700 border-amber-200">Pending</Badge>
                           )}
                           {isAdmin && member.role !== "admin" ? (
                             <Button
-                              variant="outline"
+                              variant="ghost"
                               size="sm"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 h-7 px-2 text-xs"
                               onClick={() => handleRemoveMember(member.user_id)}
                               disabled={busyAction === `remove-${member.user_id}`}
                             >
@@ -411,149 +417,173 @@ export function GroupDetailPage() {
               </Table>
             </CardContent>
           </Card>
+
+          {/* Group Snapshot + Winner History side by side */}
+          <div className="grid sm:grid-cols-2 gap-4">
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Group Snapshot</CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4 space-y-3">
+                {[
+                  { label: "Total collected", value: `${report.total_collected || 0} Birr`, color: "text-green-600" },
+                  { label: "Pending payments", value: report.pending_payments || 0, color: "text-amber-600" },
+                  { label: "Paid out", value: `${report.total_paid_out || 0} Birr`, color: "text-blue-600" },
+                ].map(({ label, value, color }) => (
+                  <div key={label} className="flex items-center justify-between py-1.5 border-b last:border-b-0">
+                    <span className="text-sm text-gray-500">{label}</span>
+                    <span className={`text-sm font-bold ${color}`}>{value}</span>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {details.payouts?.length ? (
+              <Card className="border-0 shadow-sm">
+                <CardHeader className="pb-3 border-b">
+                  <CardTitle className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Winner History</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-2 max-h-56 overflow-y-auto">
+                  {details.payouts
+                    .slice()
+                    .reverse()
+                    .map((payout) => (
+                      <div key={payout.id} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <div>
+                          <p className="text-sm font-semibold text-gray-800">Round {payout.round_number}</p>
+                          <p className="text-xs text-gray-500">{payout.recipient_name}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-bold text-gray-900">{payout.amount} Birr</p>
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-green-50 text-green-700 font-medium capitalize">{payout.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="border-0 shadow-sm bg-gray-50/60">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
+                  <Award className="w-10 h-10 mb-3 opacity-30" />
+                  <p className="text-sm">No winners yet</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
         </div>
 
-        <div>
+        {/* RIGHT — Action Panel */}
+        <div className="space-y-4 lg:sticky lg:top-6">
           {isAdmin ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Crown className="w-5 h-5 text-yellow-600" />
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 border-b bg-gradient-to-r from-[#1E3A8A]/5 to-blue-50 rounded-t-xl">
+                <CardTitle className="flex items-center gap-2 text-sm">
+                  <Crown className="w-4 h-4 text-yellow-500" />
                   Admin Controls
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                {/* Admin must pay just like other members */}
-                {members.find((m) => m.role === 'admin' && !m.has_paid_current_round) ? (
+              <CardContent className="pt-4 space-y-2.5">
+                {/* Admin payment button */}
+                {members.find((m) => m.role === "admin" && !m.has_paid_current_round) ? (
                   <Button
-                    className="w-full justify-start bg-green-600 hover:bg-green-700"
+                    className="w-full justify-start bg-green-600 hover:bg-green-700 text-sm h-10"
                     onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
                   >
                     <DollarSign className="w-4 h-4 mr-2" />
-                    Make My Payment (Round {group.current_round_number || 1})
+                    Make My Payment — Round {group.current_round_number || 1}
                   </Button>
                 ) : null}
+
+                {/* Select Winner */}
                 <Button
-                  className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                  className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-sm h-10"
                   onClick={handleSelectWinner}
                   disabled={busyAction === "selectWinner" || !allMembersPaid || !details.current_round}
                 >
                   <Award className="w-4 h-4 mr-2" />
                   {busyAction === "selectWinner" ? "Selecting..." : "Select Random Winner"}
                 </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={handleSendReminder}
-                  disabled={busyAction === "sendReminder"}
-                >
-                  <Bell className="w-4 h-4 mr-2" />
-                  Send Payment Reminders
-                </Button>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start"
-                  onClick={handleToggleGroupStatus}
-                  disabled={busyAction === "settings"}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Edit Group Settings
-                </Button>
-                <Button variant="outline" className="w-full justify-start" onClick={handleViewReport}>
-                  <FileText className="w-4 h-4 mr-2" />
-                  View Reports
-                </Button>
-                <div className="rounded-lg border border-dashed border-gray-300 p-3 text-sm text-gray-600">
+
+                {/* Payment status hint */}
+                <div className={`rounded-lg px-3 py-2.5 text-xs font-medium flex items-center gap-2 ${allMembersPaid ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+                  <span>{allMembersPaid ? "✅" : "⏳"}</span>
                   {allMembersPaid
-                    ? "✅ All members have paid. You can now select a winner for this round."
-                    : `⏳ ${paidMembers}/${members.length} members paid. Winner selection unlocks once everyone has paid.`}
+                    ? "All members paid — winner selection ready!"
+                    : `${paidMembers} of ${members.length} members paid`}
+                </div>
+
+                <div className="border-t pt-2.5 space-y-2">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-sm h-9"
+                    onClick={handleSendReminder}
+                    disabled={busyAction === "sendReminder"}
+                  >
+                    <Bell className="w-4 h-4 mr-2 text-gray-500" />
+                    Send Payment Reminders
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-sm h-9"
+                    onClick={handleToggleGroupStatus}
+                    disabled={busyAction === "settings"}
+                  >
+                    <Settings className="w-4 h-4 mr-2 text-gray-500" />
+                    Edit Group Settings
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-sm h-9"
+                    onClick={handleViewReport}
+                  >
+                    <FileText className="w-4 h-4 mr-2 text-gray-500" />
+                    View Full Report
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle>Group Info</CardTitle>
+            <Card className="border-0 shadow-sm">
+              <CardHeader className="pb-3 border-b">
+                <CardTitle className="text-sm text-gray-700">Group Info</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600">Contribution Amount</p>
-                  <p className="text-lg font-semibold">{group.contribution_amount} Birr</p>
+              <CardContent className="pt-4 space-y-3">
+                {[
+                  { label: "Contribution", value: `${group.contribution_amount} Birr` },
+                  { label: "Frequency", value: group.frequency },
+                  { label: "Status", value: group.display_status || group.status },
+                ].map(({ label, value }) => (
+                  <div key={label} className="flex justify-between items-center py-1 border-b last:border-b-0">
+                    <span className="text-sm text-gray-500">{label}</span>
+                    <span className="text-sm font-semibold capitalize text-gray-900">{value}</span>
+                  </div>
+                ))}
+                <div className="pt-2">
+                  {!isMember ? (
+                    <Button
+                      className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                      onClick={handleJoinGroup}
+                      disabled={busyAction === "join" || group.status !== "open"}
+                    >
+                      {busyAction === "join" ? "Joining..." : "Join Group"}
+                    </Button>
+                  ) : (
+                    <Button
+                      className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                      onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
+                    >
+                      <DollarSign className="w-4 h-4 mr-2" />
+                      Make Payment
+                    </Button>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Frequency</p>
-                  <p className="text-lg font-semibold capitalize">{group.frequency}</p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600">Status</p>
-                  <p className="text-lg font-semibold capitalize">{group.display_status || group.status}</p>
-                </div>
-                {!isMember ? (
-                  <Button
-                    className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
-                    onClick={handleJoinGroup}
-                    disabled={busyAction === "join" || group.status !== "open"}
-                  >
-                    {busyAction === "join" ? "Joining..." : "Join Group"}
-                  </Button>
-                ) : (
-                  <Button
-                    className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
-                    onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
-                  >
-                    Make Payment
-                  </Button>
-                )}
               </CardContent>
             </Card>
           )}
-
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle>Group Snapshot</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 text-sm text-gray-700">
-              <div className="flex justify-between">
-                <span>Total collected</span>
-                <span className="font-semibold">{report.total_collected || 0} Birr</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Pending payments</span>
-                <span className="font-semibold">{report.pending_payments || 0}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Paid out</span>
-                <span className="font-semibold">{report.total_paid_out || 0} Birr</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          {details.payouts?.length ? (
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Winner History</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {details.payouts
-                  .slice()
-                  .reverse()
-                  .map((payout) => (
-                    <div key={payout.id} className="flex items-center justify-between border-b last:border-b-0 pb-3 last:pb-0">
-                      <div>
-                        <p className="font-medium">Round {payout.round_number}</p>
-                        <p className="text-sm text-gray-600">{payout.recipient_name}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-semibold">{payout.amount} Birr</p>
-                        <p className="text-xs text-gray-500 capitalize">{payout.status}</p>
-                      </div>
-                    </div>
-                  ))}
-              </CardContent>
-            </Card>
-          ) : null}
         </div>
       </div>
     </div>
   );
 }
+
+
