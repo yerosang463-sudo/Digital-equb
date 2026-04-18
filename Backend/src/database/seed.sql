@@ -3,13 +3,13 @@ USE `digital-equb`;
 
 -- Clear existing data to avoid duplicate errors
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE notifications;
-TRUNCATE TABLE payouts;
-TRUNCATE TABLE payments;
-TRUNCATE TABLE equb_rounds;
-TRUNCATE TABLE group_members;
-TRUNCATE TABLE equb_groups;
-TRUNCATE TABLE users;
+DELETE FROM notifications;
+DELETE FROM payouts;
+DELETE FROM payments;
+DELETE FROM equb_rounds;
+DELETE FROM group_members;
+DELETE FROM equb_groups;
+DELETE FROM users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Sample users (password for all: password123)
