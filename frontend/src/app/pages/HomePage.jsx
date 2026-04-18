@@ -47,38 +47,38 @@ export function HomePage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card>
+            <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-transparent hover:border-blue-100 group">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-blue-100 text-[#1E3A8A] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-8 h-8" />
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-[#1E3A8A] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                  <Shield className="w-10 h-10" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">100% Secure</h3>
-                <p className="text-gray-600">
-                  Bank-level security with encrypted transactions and verified members
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">100% Secure</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Bank-level security with end-to-end encryption. Your funds and personal data are protected by state-of-the-art security protocols.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-transparent hover:border-green-100 group">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-8 h-8" />
+                <div className="w-20 h-20 bg-gradient-to-br from-green-50 to-green-100 text-green-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                  <TrendingUp className="w-10 h-10" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Grow Your Savings</h3>
-                <p className="text-gray-600">
-                  Disciplined Daily, Weekly and Monthly Payments. Your contributions help you save more than you thought possible
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">Grow Your Savings</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Join a community of savers. Disciplined contributions help you reach your financial goals faster than saving alone.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-transparent hover:border-purple-100 group">
               <CardContent className="p-8 text-center">
-                <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8" />
+                <div className="w-20 h-20 bg-gradient-to-br from-purple-50 to-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                  <Users className="w-10 h-10" />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">Community First</h3>
-                <p className="text-gray-600">
-                  Join or create groups with family, friends, or colleagues you trust
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">Community First</h3>
+                <p className="text-gray-600 leading-relaxed">
+                  Built on trust. Create or join private groups with family and friends, or explore public circles with verified members.
                 </p>
               </CardContent>
             </Card>
