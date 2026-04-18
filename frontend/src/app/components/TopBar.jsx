@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, LogOut, Search } from "lucide-react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";
@@ -52,6 +52,14 @@ export function TopBar() {
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between gap-4">
+        {/* Mobile Logo */}
+        <Link to="/" className="md:hidden flex items-center gap-2 flex-shrink-0">
+          <div className="w-9 h-9 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-lg">E</span>
+          </div>
+          <span className="font-semibold text-gray-900 hidden sm:block">Digital Equb</span>
+        </Link>
+
         <div className="flex-1 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />

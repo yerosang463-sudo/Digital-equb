@@ -204,12 +204,12 @@ export function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
+              <Link to="/" className="flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
                 <div className="w-8 h-8 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold">E</span>
                 </div>
                 <span className="text-white font-semibold">Digital Equb</span>
-              </div>
+              </Link>
               <p className="text-sm">Making traditional savings circles accessible to everyone.</p>
             </div>
             <div>

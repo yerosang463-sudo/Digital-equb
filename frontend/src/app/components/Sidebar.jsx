@@ -14,7 +14,7 @@ export function Sidebar() {
   return (
     <div className="hidden md:flex w-64 bg-white border-r border-gray-200 flex-col">
       <div className="p-6 border-b border-gray-200">
-        <Link to="/dashboard" className="flex items-center gap-2">
+        <Link to="/" className="flex items-center gap-2">
           <div className="w-10 h-10 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">E</span>
           </div>

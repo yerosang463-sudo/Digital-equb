@@ -36,11 +36,11 @@ export function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#1E3A8A] to-[#3B82F6] flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+          <Link to="/" className="flex justify-center mb-4 transition-transform hover:scale-105">
+            <div className="w-16 h-16 bg-[#1E3A8A] rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-3xl">E</span>
             </div>
-          </div>
+          </Link>
           <CardTitle className="text-2xl text-center">Welcome Back</CardTitle>
           <CardDescription className="text-center">Sign in to your Digital Equb account</CardDescription>
         </CardHeader>
