@@ -13,14 +13,15 @@ DELETE FROM users;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- Sample users (password for all: password123)
--- Keeping only 2 users
-INSERT INTO users (full_name, email, phone, password_hash, bio) VALUES
-('Abebe Bekele', 'abebe@example.com', '+251911234567', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Equb enthusiast from Addis Ababa'),
-('Tigist Alemayehu', 'tigist@example.com', '+251922345678', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Savings group coordinator');
+-- Keeping only 2 users with explicit IDs
+INSERT INTO users (id, full_name, email, phone, password_hash, bio) VALUES
+(1, 'Abebe Bekele', 'abebe@example.com', '+251911234567', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Equb enthusiast from Addis Ababa'),
+(2, 'Tigist Alemayehu', 'tigist@example.com', '+251922345678', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Savings group coordinator');
 
 -- Groups
--- Keeping only 2 groups
+-- Keeping only 2 groups with explicit IDs (1 and 2)
 INSERT INTO equb_groups (
+  id,
   name,
   description,
   contribution_amount,
@@ -34,8 +35,8 @@ INSERT INTO equb_groups (
   auto_select_winner,
   created_by
 ) VALUES
-('Family Savings Circle', 'Monthly family savings circle with random winner selection.', 500.00, 'monthly', 5, 2, 'active', '2026-01-01', '2026-05-31', 'random', 1, 1),
-('Tech Professionals Equb', 'Professional circle for product builders and freelancers.', 1000.00, 'monthly', 4, 2, 'active', '2026-02-01', '2026-05-31', 'manual', 0, 2);
+(1, 'Family Savings Circle', 'Monthly family savings circle with random winner selection.', 500.00, 'monthly', 5, 2, 'active', '2026-01-01', '2026-05-31', 'random', 1, 1),
+(2, 'Tech Professionals Equb', 'Professional circle for product builders and freelancers.', 1000.00, 'monthly', 4, 2, 'active', '2026-02-01', '2026-05-31', 'manual', 0, 2);
 
 -- Members
 INSERT INTO group_members (group_id, user_id, role, payout_order, has_received_payout, payout_date) VALUES
