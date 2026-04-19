@@ -19,6 +19,7 @@ import { Progress } from "../components/ui/progress";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../components/ui/dialog";
 import { apiRequest } from "../lib/api";
 
 function initials(name) {
@@ -216,51 +217,63 @@ export function GroupDetailPage() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
 
-      {/* ── Cycle Completed Banner ─────────────────────────────────── */}
-      {group.status === "completed" && isAdmin ? (
-        <div className="rounded-2xl border-4 border-yellow-400 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-2xl ring-8 ring-yellow-400/10 animate-in zoom-in-95 duration-700">
-          <div className="flex flex-col items-center text-center gap-6">
-            <div className="text-7xl animate-bounce">🏆</div>
-            <div className="space-y-2">
-              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Congratulations! Cycle Completed</h2>
-              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Every member has successfully received their payout. You have managed this Equb perfectly.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mt-4">
-              <Button
-                className="flex-1 bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-6 text-base"
-                onClick={handleRestartCycle}
-                disabled={busyAction === "restartCycle"}
-              >
-                {busyAction === "restartCycle" ? (
-                  "Restarting..."
-                ) : (
-                  <>
-                    <span className="mr-2">🔄</span>
-                    Start New Cycle (Round 1)
-                  </>
-                )}
-              </Button>
+      {/* ── Cycle Completed Celebration Modal ───────────────────────── */}
+      <Dialog open={group.status === "completed" && isAdmin} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-xl border-4 border-yellow-400 shadow-2xl bg-gradient-to-br from-yellow-50 via-white to-orange-50 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400"></div>
+          
+          <DialogHeader className="pt-8 flex flex-col items-center">
+            <div className="text-8xl mb-6 animate-bounce">🏆</div>
+            <DialogTitle className="text-4xl font-black text-gray-900 text-center leading-tight">
+              Congratulations!<br />Cycle Successfully Completed
+            </DialogTitle>
+            <DialogDescription className="text-center text-xl text-gray-600 mt-4 px-4 leading-relaxed">
+              Fantastic job. You have managed this group perfectly and every single member has received their payout.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex flex-col gap-4 py-8 px-6">
+            <Button
+              className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-8 text-xl font-bold shadow-xl shadow-blue-900/20"
+              onClick={handleRestartCycle}
+              disabled={busyAction === "restartCycle"}
+            >
+              {busyAction === "restartCycle" ? (
+                "Restarting..."
+              ) : (
+                <>
+                  <span className="mr-3">🔄</span>
+                  Start a New Cycle (Round 1)
+                </>
+              )}
+            </Button>
+            
+            <div className="flex gap-4">
               <Button
                 variant="outline"
-                className="flex-1 border-red-400 text-red-600 hover:bg-red-50 py-6 text-base"
-                onClick={handleCloseGroup}
-                disabled={busyAction === "closeGroup"}
+                className="flex-1 border-gray-300 text-gray-600 py-6 text-base hover:bg-gray-100"
+                onClick={handleViewReport}
               >
-                {busyAction === "closeGroup" ? (
-                  "Closing..."
-                ) : (
+                <FileText className="w-4 h-4 mr-2" />
+                View Final Report
+              </Button>
+              <Button
+              variant="outline"
+              className="flex-1 border-red-400 text-red-600 hover:bg-red-50 py-6 text-base"
+              onClick={handleCloseGroup}
+              disabled={busyAction === "closeGroup"}
+            >
+                {busyAction === "closeGroup" ? "Closing..." : (
                   <>
-                    <span className="mr-2">✅</span>
-                    Close Group (Done)
+                    <span className="mr-2">🏁</span>
+                    Finish & Close Group
                   </>
                 )}
               </Button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </DialogContent>
+      </Dialog>
 
       {/* ── Group Header ──────────────────────────────────────────── */}
       <div className="bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white rounded-lg p-8">
