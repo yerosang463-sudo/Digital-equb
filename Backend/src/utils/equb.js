@@ -1,13 +1,13 @@
 function addFrequency(dateValue, frequency, steps = 1) {
   const date = new Date(dateValue);
 
-  if (frequency === "weekly") {
-    date.setDate(date.getDate() + (7 * steps));
+  if (frequency === "daily") {
+    date.setDate(date.getDate() + steps);
     return date;
   }
 
-  if (frequency === "biweekly") {
-    date.setDate(date.getDate() + (14 * steps));
+  if (frequency === "weekly") {
+    date.setDate(date.getDate() + (7 * steps));
     return date;
   }
 
@@ -144,7 +144,7 @@ async function createRound(conn, group, roundNumber) {
 
 async function ensureCurrentRound(conn, groupId) {
   let group = await getGroupById(conn, groupId);
-  if (!group || group.status !== "active") {
+  if (!group || (group.status !== "active" && group.status !== "open")) {
     return null;
   }
 

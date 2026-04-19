@@ -45,6 +45,12 @@ export function GroupDetailPage() {
   const [busyAction, setBusyAction] = useState("");
 
   useEffect(() => {
+    if (details?.group?.status === "completed" && details?.group?.my_role === "admin") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [details?.group?.status]);
+
+  useEffect(() => {
     let ignore = false;
 
     async function loadGroup() {
@@ -194,20 +200,20 @@ export function GroupDetailPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 animate-in fade-in duration-500">
 
       {/* ── Cycle Completed Banner ─────────────────────────────────── */}
       {group.status === "completed" && isAdmin ? (
-        <div className="rounded-xl border-2 border-yellow-400 bg-gradient-to-r from-yellow-50 to-orange-50 p-8">
-          <div className="flex flex-col items-center text-center gap-4">
-            <div className="text-5xl">🏆</div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">All Rounds Completed!</h2>
-              <p className="text-gray-600 mt-1">
-                Every member has received a payout. What would you like to do next?
+        <div className="rounded-2xl border-4 border-yellow-400 bg-gradient-to-br from-yellow-50 via-white to-orange-50 p-8 shadow-2xl ring-8 ring-yellow-400/10 animate-in zoom-in-95 duration-700">
+          <div className="flex flex-col items-center text-center gap-6">
+            <div className="text-7xl animate-bounce">🏆</div>
+            <div className="space-y-2">
+              <h2 className="text-3xl font-black text-gray-900 tracking-tight">Congratulations! Cycle Completed</h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+                Every member has successfully received their payout. You have managed this Equb perfectly.
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row gap-3 w-full max-w-md mt-2">
+            <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg mt-4">
               <Button
                 className="flex-1 bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-6 text-base"
                 onClick={handleRestartCycle}

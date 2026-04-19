@@ -324,7 +324,7 @@ router.post(
     body('description').optional().trim(),
     body('contribution_amount').isFloat({ min: 1 }).withMessage('Contribution amount must be a positive number'),
     body('max_members').isInt({ min: 2 }).withMessage('Max members must be at least 2'),
-    body('frequency').isIn(['weekly', 'biweekly', 'monthly']).withMessage('Invalid frequency'),
+    body('frequency').isIn(['daily', 'weekly', 'monthly']).withMessage('Invalid frequency'),
     body('start_date').optional().isDate().withMessage('Invalid start date'),
     body('end_date').optional().isDate().withMessage('Invalid end date'),
     body('winner_selection_mode').optional().isIn(['manual', 'random']),
@@ -831,12 +831,12 @@ router.post('/:id/restart-cycle', authenticate, async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Only completed groups can be restarted' });
     }
 
-    // 1. Close any lingering open rounds
-    await conn.query(
-      `UPDATE equb_rounds SET status = 'closed', closed_at = NOW()
-       WHERE group_id = ? AND status IN ('collecting', 'winner_selected')`,
-      [req.params.id]
-    );
+    // 1. Delete all history for this group (Rounds, Payments, Payouts)
+    // This allows us to reuse round numbers like "1" for the new cycle
+    await conn.query(`DELETE FROM equb_rounds WHERE group_id = ?`, [req.params.id]);
+    await conn.query(`DELETE FROM payments WHERE group_id = ?`, [req.params.id]);
+    await conn.query(`DELETE FROM payouts WHERE group_id = ?`, [req.params.id]);
+    await conn.query(`DELETE FROM notifications WHERE related_group_id = ?`, [req.params.id]);
 
     // 2. Reset member payout flags so everyone is eligible again
     await conn.query(

@@ -143,7 +143,7 @@ export function SignupPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-900/20 mt-4" disabled={submitting || socialLoading}>
+            <Button type="submit" className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-all shadow-lg shadow-blue-900/20 mt-4" disabled={submitting}>
               {submitting ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
