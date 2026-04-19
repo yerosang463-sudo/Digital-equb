@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS equb_groups (
   name VARCHAR(150) NOT NULL,
   description TEXT,
   contribution_amount DECIMAL(12, 2) NOT NULL,
-  frequency ENUM('weekly', 'biweekly', 'monthly') DEFAULT 'monthly',
+  frequency ENUM('daily', 'weekly', 'monthly') DEFAULT 'monthly',
   max_members INT NOT NULL DEFAULT 10,
   current_members INT DEFAULT 0,
   cycle_total_rounds INT DEFAULT NULL,
