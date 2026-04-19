@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
+import confetti from "canvas-confetti";
 import {
   Crown,
   Users,
@@ -44,11 +45,24 @@ export function GroupDetailPage() {
   const [details, setDetails] = useState(null);
   const [busyAction, setBusyAction] = useState("");
 
+  // Auto-scroll and celebrate when something big happens
   useEffect(() => {
-    if (details?.group?.status === "completed" && details?.group?.my_role === "admin") {
+    const isCompleted = details?.group?.status === "completed";
+    const hasWinner = !!details?.group?.current_winner_name;
+
+    if ((isCompleted || hasWinner) && details?.group?.my_role === "admin") {
+      // 1. Smoothly glide to the top so news is visible
       window.scrollTo({ top: 0, behavior: "smooth" });
+
+      // 2. Fire the celebration!
+      confetti({
+        particleCount: 150,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ["#1E3A8A", "#3B82F6", "#F59E0B", "#10B981"],
+      });
     }
-  }, [details?.group?.status]);
+  }, [details?.group?.status, details?.group?.current_winner_name]);
 
   useEffect(() => {
     let ignore = false;
