@@ -122,7 +122,7 @@ export function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20">
+      <section id="how-it-works" className="py-24 bg-[#FAF7F2]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
@@ -140,18 +140,20 @@ export function HomePage() {
             { icon: DollarSign, step: "3", title: "Make Contributions", desc: "Pay monthly via Telebirr - safe and instant" },
             { icon: TrendingUp, step: "4", title: "Win Your Turn", desc: "Receive the full pool when it's your round" }].
             map((item, index) =>
-            <div key={index} className="text-center group p-8 rounded-3xl transition-all duration-500 border-2 border-transparent hover:border-blue-100 hover:bg-blue-50/30 hover:shadow-2xl hover:-translate-y-3 cursor-default">
-                <div className="relative mb-6">
-                  <div className="w-20 h-20 bg-[#1E3A8A] text-white rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300 shadow-lg">
-                    <item.icon className="w-10 h-10" />
-                  </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 text-gray-900 rounded-full flex items-center justify-center font-bold shadow-md">
-                    {item.step}
-                  </div>
+            <Card key={index} className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-transparent hover:border-blue-100 group">
+              <CardContent className="p-8 text-center relative">
+                <div className="absolute top-4 right-4 w-10 h-10 bg-yellow-400 text-gray-900 rounded-full flex items-center justify-center font-bold shadow-md z-20">
+                  {item.step}
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-gray-900">{item.title}</h3>
+                
+                <div className="w-20 h-20 bg-gradient-to-br from-blue-50 to-blue-100 text-[#1E3A8A] rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                  <item.icon className="w-10 h-10" />
+                </div>
+                
+                <h3 className="text-2xl font-bold mb-3 text-gray-900">{item.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{item.desc}</p>
-              </div>
+              </CardContent>
+            </Card>
             )}
           </div>
 
