@@ -140,7 +140,7 @@ export function HomePage() {
             { icon: DollarSign, step: "3", title: "Make Contributions", desc: "Pay monthly via Telebirr - safe and instant" },
             { icon: TrendingUp, step: "4", title: "Win Your Turn", desc: "Receive the full pool when it's your round" }].
             map((item, index) =>
-            <div key={index} className="text-center group p-6 rounded-2xl transition-all duration-300 hover:bg-white hover:shadow-xl hover:-translate-y-2 cursor-default">
+            <div key={index} className="text-center group p-8 rounded-3xl transition-all duration-500 border-2 border-transparent hover:border-blue-100 hover:bg-blue-50/30 hover:shadow-2xl hover:-translate-y-3 cursor-default">
                 <div className="relative mb-6">
                   <div className="w-20 h-20 bg-[#1E3A8A] text-white rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <item.icon className="w-10 h-10" />
@@ -155,16 +155,7 @@ export function HomePage() {
             )}
           </div>
 
-          <div className="mt-12 bg-blue-50 border border-blue-200 rounded-lg p-6">
-            <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-[#10B981]" />
-              Example: How Digital Equb Works
-            </h4>
-            <p className="text-gray-700">
-              <strong>10 members</strong> × <strong>200 Birr/month</strong> = <strong>2,000 Birr pool</strong> each round.
-              After 10 months, everyone has received 2,000 Birr - a disciplined way to save!
-            </p>
-          </div>
+
         </div>
       </section>
 
