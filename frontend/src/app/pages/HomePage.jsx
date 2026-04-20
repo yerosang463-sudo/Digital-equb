@@ -1,4 +1,6 @@
 import heroIllustration from "../../assets/hero_illustration.png";
+//import  homepage_image from "../../assets/homepage_image.png";
+
 import { Link } from "react-router";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/button";
@@ -49,7 +51,8 @@ export function HomePage() {
                 <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-yellow-400/10 rounded-full blur-3xl"></div>
                 
                 <img 
-                  src={heroIllustration} 
+                   src={heroIllustration} 
+                  // src={homepage_image} 
                   alt="Digital Equb Community Savings" 
                   className="relative z-10 w-full h-auto object-contain drop-shadow-2xl"
                 />
