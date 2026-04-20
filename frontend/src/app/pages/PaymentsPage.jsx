@@ -189,20 +189,28 @@ export function PaymentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {completedPayments.map((payment) => (
-                <TableRow key={payment.id}>
-                  <TableCell className="font-medium">
-                    {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : payment.due_date}
-                  </TableCell>
-                  <TableCell>{payment.group_name}</TableCell>
-                  <TableCell>Round {payment.round_number}</TableCell>
-                  <TableCell className="capitalize">{payment.payment_method}</TableCell>
-                  <TableCell className="text-right font-semibold">{payment.amount} Birr</TableCell>
-                  <TableCell className="text-right">
-                    <Badge className="bg-green-100 text-green-800">Completed</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
+              {visiblePayments.map((payment) => {
+                const isPaid = payment.status === "completed";
+                
+                return (
+                  <TableRow key={payment.id}>
+                    <TableCell className="font-medium text-gray-500">
+                      {payment.paid_at ? new Date(payment.paid_at).toLocaleDateString() : (payment.due_date ? new Date(payment.due_date).toLocaleDateString() : "Pending")}
+                    </TableCell>
+                    <TableCell className="font-semibold text-gray-700">{payment.group_name}</TableCell>
+                    <TableCell>Round {payment.round_number}</TableCell>
+                    <TableCell className="capitalize text-gray-500">{payment.payment_method || "—"}</TableCell>
+                    <TableCell className="text-right font-bold text-gray-900">{payment.amount} Birr</TableCell>
+                    <TableCell className="text-right">
+                      {isPaid ? (
+                        <Badge className="bg-green-100 text-green-800 border-green-200">Completed</Badge>
+                      ) : (
+                        <Badge className="bg-amber-100 text-amber-800 border-amber-200">Pending</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

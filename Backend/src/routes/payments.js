@@ -19,7 +19,12 @@ function basePaymentsQuery() {
       g.name AS group_name,
       u.full_name AS payer_name,
       r.status AS round_status,
-      winner.full_name AS round_winner_name
+      winner.full_name AS round_winner_name,
+      (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = p.group_id) as group_total_members,
+      (SELECT COUNT(*) FROM payments p2 
+       WHERE p2.group_id = p.group_id 
+       AND p2.round_number = p.round_number 
+       AND p2.status = 'completed') as round_paid_count
     FROM payments p
     JOIN equb_groups g ON p.group_id = g.id
     JOIN users u ON p.payer_id = u.id
