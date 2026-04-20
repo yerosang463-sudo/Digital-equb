@@ -10,9 +10,7 @@ import { Users, Shield, TrendingUp, CheckCircle, DollarSign, ArrowRight } from "
 export function HomePage() {
   return (
     <div className="min-h-screen bg-white">
-      <div className="absolute top-0 left-0 right-0 z-50">
-        <Navbar variant="transparent" />
-      </div>
+      <Navbar variant="transparent" />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-[#1E3A8A] pt-20">
