@@ -217,6 +217,76 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
+                Get in Touch
+              </h2>
+              <p className="text-xl text-gray-600 mb-8">
+                Have questions about Digital Equb? Our team is here to help you start your savings journey.
+              </p>
+              
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
+                    <CheckCircle className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Email Us</h4>
+                    <p className="text-gray-600">support@digitalequb.com</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Community Support</h4>
+                    <p className="text-gray-600">Join our Telegram channel for instant help</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-xl">
+              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">FullName</label>
+                  <input 
+                    type="text" 
+                    placeholder="Enter your name"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                  <input 
+                    type="email" 
+                    placeholder="name@example.com"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea 
+                    rows="4" 
+                    placeholder="How can we help you?"
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all resize-none"
+                  ></textarea>
+                </div>
+                <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-6 rounded-xl text-lg font-semibold shadow-lg transition-all transform hover:scale-[1.02]">
+                  Send Message
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] text-white">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">

@@ -39,6 +39,9 @@ export function Navbar({ variant = "default" }) {
             <a href="#testimonials" className={`font-medium transition-colors ${
               isTransparent ? "text-blue-50 hover:text-white" : "text-gray-700 hover:text-[#1E3A8A]"
             }`}>Testimonials</a>
+            <a href="#contact" className={`font-medium transition-colors ${
+              isTransparent ? "text-blue-50 hover:text-white" : "text-gray-700 hover:text-[#1E3A8A]"
+            }`}>Contact</a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -70,6 +73,7 @@ export function Navbar({ variant = "default" }) {
               <a href="#features" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Features</a>
               <a href="#how-it-works" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>How It Works</a>
               <a href="#testimonials" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Testimonials</a>
+              <a href="#contact" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Contact</a>
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" className="w-full">
                   <Button variant="ghost" className={`w-full ${isTransparent ? "text-white hover:bg-white/10" : ""}`}>Login</Button>
