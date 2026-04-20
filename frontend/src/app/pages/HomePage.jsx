@@ -140,17 +140,17 @@ export function HomePage() {
             { icon: DollarSign, step: "3", title: "Make Contributions", desc: "Pay monthly via Telebirr - safe and instant" },
             { icon: TrendingUp, step: "4", title: "Win Your Turn", desc: "Receive the full pool when it's your round" }].
             map((item, index) =>
-            <div key={index} className="text-center">
+            <div key={index} className="text-center group p-6 rounded-2xl transition-all duration-300 hover:bg-white hover:shadow-xl hover:-translate-y-2 cursor-default">
                 <div className="relative mb-6">
-                  <div className="w-20 h-20 bg-[#1E3A8A] text-white rounded-full flex items-center justify-center mx-auto">
+                  <div className="w-20 h-20 bg-[#1E3A8A] text-white rounded-full flex items-center justify-center mx-auto group-hover:scale-110 transition-transform duration-300 shadow-lg">
                     <item.icon className="w-10 h-10" />
                   </div>
-                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 text-gray-900 rounded-full flex items-center justify-center font-bold">
+                  <div className="absolute -top-2 -right-2 w-8 h-8 bg-yellow-400 text-gray-900 rounded-full flex items-center justify-center font-bold shadow-md">
                     {item.step}
                   </div>
                 </div>
-                <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-                <p className="text-gray-600">{item.desc}</p>
+                <h3 className="text-xl font-bold mb-3 text-gray-900">{item.title}</h3>
+                <p className="text-gray-600 leading-relaxed">{item.desc}</p>
               </div>
             )}
           </div>
