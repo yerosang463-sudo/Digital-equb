@@ -168,6 +168,68 @@ export function HomePage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Transparent Pricing
+            </h2>
+            <p className="text-xl text-gray-600">
+              Simple management fees that support the platform
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+            <Card className="border-2 border-transparent hover:border-blue-100 transition-all duration-300 shadow-lg">
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-2">Basic Circle</h3>
+                <p className="text-gray-500 mb-6">For small groups of friends and family</p>
+                <div className="text-4xl font-bold mb-6">Free</div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Up to 5 members
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Manual winner selection
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Basic bookkeeping
+                  </li>
+                </ul>
+                <Button className="w-full" variant="outline">Current Plan</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="border-2 border-[#1E3A8A] relative shadow-2xl">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#1E3A8A] text-white px-4 py-1 rounded-full text-sm font-semibold">
+                Most Popular
+              </div>
+              <CardContent className="p-8">
+                <h3 className="text-2xl font-bold mb-2">Pro Circle</h3>
+                <p className="text-gray-500 mb-6">For automated and public groups</p>
+                <div className="text-4xl font-bold mb-6">1.5% <span className="text-lg font-normal text-gray-500">/ pool</span></div>
+                <ul className="space-y-4 mb-8">
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Unlimited members
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Automated randomizing
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Verified member status
+                  </li>
+                  <li className="flex items-center gap-2 text-gray-600">
+                    <CheckCircle className="w-5 h-5 text-green-500" /> Priority support
+                  </li>
+                </ul>
+                <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">Go Pro</Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section id="testimonials" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -320,25 +382,25 @@ export function HomePage() {
             <div>
               <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Features</a></li>
-                <li><a href="#" className="hover:text-white">How It Works</a></li>
-                <li><a href="#" className="hover:text-white">Pricing</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a></li>
+                <li><a href="#pricing" className="hover:text-white transition-colors">Pricing</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">About</a></li>
-                <li><a href="#" className="hover:text-white">Contact</a></li>
-                <li><a href="#" className="hover:text-white">Support</a></li>
+                <li><a href="#features" className="hover:text-white transition-colors">About</a></li>
+                <li><a href="#contact" className="hover:text-white transition-colors">Contact</a></li>
+                <li><a href="#contact" className="hover:text-white transition-colors">Support</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Privacy</a></li>
-                <li><a href="#" className="hover:text-white">Terms</a></li>
-                <li><a href="#" className="hover:text-white">Security</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
               </ul>
             </div>
           </div>

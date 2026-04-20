@@ -36,6 +36,9 @@ export function Navbar({ variant = "default" }) {
             <a href="#how-it-works" className={`font-medium transition-colors ${
               isTransparent ? "text-blue-50 hover:text-white" : "text-gray-700 hover:text-[#1E3A8A]"
             }`}>How It Works</a>
+            <a href="#pricing" className={`font-medium transition-colors ${
+              isTransparent ? "text-blue-50 hover:text-white" : "text-gray-700 hover:text-[#1E3A8A]"
+            }`}>Pricing</a>
             <a href="#testimonials" className={`font-medium transition-colors ${
               isTransparent ? "text-blue-50 hover:text-white" : "text-gray-700 hover:text-[#1E3A8A]"
             }`}>Testimonials</a>
@@ -72,6 +75,7 @@ export function Navbar({ variant = "default" }) {
             <div className="flex flex-col gap-4 px-4">
               <a href="#features" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Features</a>
               <a href="#how-it-works" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>How It Works</a>
+              <a href="#pricing" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Pricing</a>
               <a href="#testimonials" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Testimonials</a>
               <a href="#contact" className={`font-medium ${isTransparent ? "text-white" : "text-gray-700"}`}>Contact</a>
               <div className="flex flex-col gap-2 pt-2">
