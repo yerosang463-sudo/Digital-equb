@@ -505,22 +505,15 @@ router.post('/:id/join', authenticate, async (req, res, next) => {
     const nextCount = Number(group.member_count) + 1;
     const nextStatus = nextCount >= Number(group.max_members) ? 'active' : 'open';
 
-      await conn.query(
-        `UPDATE equb_groups
-       SET current_members = ?, status = ?, cycle_total_rounds = CASE WHEN ? = 'active' THEN ? ELSE cycle_total_rounds END
-       WHERE id = ?`,
-      [nextCount, nextStatus, nextStatus, nextCount, req.params.id]
-    );
-
     // After join: ensure the new member has a payment record for the current round
     // If group just became active, upgrade the existing open round's status and snapshot member count
     const currentRound = await getCurrentRound(conn, req.params.id);
 
     if (nextStatus === 'active') {
-      // Lock in cycle_total_rounds now that all members have joined
+      // Group is now full: update members, status, and lock in total rounds in one query
       await conn.query(
-        `UPDATE equb_groups SET cycle_total_rounds = ? WHERE id = ?`,
-        [nextCount, req.params.id]
+        `UPDATE equb_groups SET current_members = ?, status = 'active', cycle_total_rounds = ? WHERE id = ?`,
+        [nextCount, nextCount, req.params.id]
       );
 
       if (!currentRound) {

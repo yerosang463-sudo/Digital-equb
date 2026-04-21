@@ -1,3 +1,4 @@
+import { useState } from "react";
 import heroIllustration from "../../assets/hero_illustration.png";
 //import  homepage_image from "../../assets/homepage_image.png";
 
@@ -5,9 +6,38 @@ import { Link } from "react-router";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/button";
 import { Card, CardContent } from "../components/ui/card";
-import { Users, Shield, TrendingUp, CheckCircle, DollarSign, ArrowRight } from "lucide-react";
+import { Label } from "../components/ui/label";
+import { Input } from "../components/ui/input";
+import { Users, Shield, TrendingUp, CheckCircle, DollarSign, ArrowRight, Mail } from "lucide-react";
+import { apiRequest } from "../lib/api";
 
 export function HomePage() {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSent, setIsSent] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+
+  const isFormValid = formData.email.includes("@") && formData.email.includes(".") && formData.message.trim().length > 5;
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!isFormValid) return;
+    
+    setIsSubmitting(true);
+    try {
+      await apiRequest("/api/contact", {
+        method: "POST",
+        body: formData
+      });
+      setIsSent(true);
+      setFormData({ name: "", email: "", message: "" });
+      setTimeout(() => setIsSent(false), 5000);
+    } catch (error) {
+      window.alert(error.message || "Failed to send message. Please try again later.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Navbar variant="transparent" />
@@ -135,7 +165,7 @@ export function HomePage() {
             {[
             { icon: Users, step: "1", title: "Create Account", desc: "Sign up in minutes with your phone number" },
             { icon: Users, step: "2", title: "Join a Group", desc: "Browse groups or create your own with custom rules" },
-            { icon: DollarSign, step: "3", title: "Make Contributions", desc: "Pay monthly via Telebirr - safe and instant" },
+            { icon: DollarSign, step: "3", title: "Make Contributions", desc: "Pay daily, weekly or monthly via Telebirr - safe and instant" },
             { icon: TrendingUp, step: "4", title: "Win Your Turn", desc: "Receive the full pool when it's your round" }].
             map((item, index) =>
             <Card key={index} className="transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 border-transparent hover:border-blue-100 group">
@@ -246,7 +276,7 @@ export function HomePage() {
               text: "I joined a group with my colleagues. The transparency is amazing - I can see every payment and know exactly when my turn is coming."
             },
             {
-              name: "Sara Mulugeta",
+              name: "Chaltu Mulugeta",
               role: "Student",
               text: "Started with a small group of 5 friends contributing 100 Birr each. Now we're on our third cycle. Best decision ever!"
             }].
@@ -271,71 +301,103 @@ export function HomePage() {
       </section>
 
       {/* Contact Section */}
-      <section id="contact" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+      <section id="contact" className="py-24 bg-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-                Get in Touch
-              </h2>
-              <p className="text-xl text-gray-600 mb-8">
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+              <p className="text-xl text-gray-600 mb-10 leading-relaxed">
                 Have questions about Digital Equb? Our team is here to help you start your savings journey.
               </p>
               
-              <div className="space-y-6">
+              <div className="space-y-8">
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
-                    <CheckCircle className="w-6 h-6" />
+                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
+                    <Mail className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Email Us</h4>
-                    <p className="text-gray-600">support@digitalequb.com</p>
+                    <h4 className="font-bold text-gray-900 text-lg">Email Us</h4>
+                    <p className="text-gray-600">We're here to help! Send us an email and we'll get back to you as soon as possible</p>
+                    <div>
+                      <p><a href="yerosang463@gmail.com" className="text-blue-600 hover:underline">Email Us</a></p>
+                    </div>
                   </div>
+                    
                 </div>
-                
                 <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
+                  <div className="w-12 h-12 bg-blue-50 text-[#1E3A8A] rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm border border-blue-100">
                     <Users className="w-6 h-6" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-gray-900">Community Support</h4>
+                    <h4 className="font-bold text-gray-900 text-lg">Community Support</h4>
                     <p className="text-gray-600">Join our Telegram channel for instant help</p>
+                    <p><a href="https://t.me/novara_code" className="text-blue-600 hover:underline">Join Now</a></p>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 p-8 rounded-3xl border border-gray-100 shadow-xl">
-              <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">FullName</label>
-                  <input 
-                    type="text" 
-                    placeholder="Enter your name"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                  <input 
-                    type="email" 
-                    placeholder="name@example.com"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                  <textarea 
-                    rows="4" 
-                    placeholder="How can we help you?"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent outline-none transition-all resize-none"
-                  ></textarea>
-                </div>
-                <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-6 rounded-xl text-lg font-semibold shadow-lg transition-all transform hover:scale-[1.02]">
-                  Send Message
-                </Button>
-              </form>
-            </div>
+            <Card className="shadow-2xl border-none rounded-3xl overflow-hidden">
+              <CardContent className="p-10">
+                {isSent ? (
+                  <div className="text-center py-10 animate-in fade-in zoom-in duration-500">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <CheckCircle className="w-10 h-10" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">Message Sent!</h3>
+                    <p className="text-gray-600">Thank you for reaching out. We'll get back to you shortly.</p>
+                  </div>
+                ) : (
+                  <form className="space-y-6" onSubmit={handleSubmit}>
+                    <div className="space-y-2">
+                      <Label htmlFor="name" className="text-gray-700 font-semibold">Full Name</Label>
+                      <Input 
+                        id="name" 
+                        placeholder="Enter your name" 
+                        className="h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-all"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-gray-700 font-semibold">Email Address</Label>
+                      <Input 
+                        id="email" 
+                        type="email" 
+                        placeholder="Enter your Email" 
+                        className="h-12 rounded-xl bg-gray-50 border-gray-100 focus:bg-white transition-all"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="message" className="text-gray-700 font-semibold">Message</Label>
+                      <textarea 
+                        id="message" 
+                        className="w-full min-h-[150px] p-4 rounded-xl bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-[#1E3A8A] focus:border-transparent transition-all outline-none text-sm resize-none"
+                        placeholder="How can we help you?"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        required
+                      ></textarea>
+                    </div>
+                    <Button 
+                      type="submit" 
+                      className={`w-full h-12 bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2 ${!isFormValid || isSubmitting ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                      disabled={!isFormValid || isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Sending...
+                        </>
+                      ) : "Send Message"}
+                    </Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
