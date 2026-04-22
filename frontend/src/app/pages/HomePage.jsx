@@ -251,55 +251,6 @@ export function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section id="testimonials" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Trusted by Thousands
-            </h2>
-            <p className="text-xl text-gray-600">
-              See what our members are saying
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-            {
-              name: "Hanna Tesfaye",
-              role: "Small Business Owner",
-              text: "Digital Equb helped me save 20,000 Birr in just 10 months. I used it to expand my café. The automatic reminders kept me on track!"
-            },
-            {
-              name: "Dawit Alemu",
-              role: "Teacher",
-              text: "I joined a group with my colleagues. The transparency is amazing - I can see every payment and know exactly when my turn is coming."
-            },
-            {
-              name: "Chaltu Mulugeta",
-              role: "Student",
-              text: "Started with a small group of 5 friends contributing 100 Birr each. Now we're on our third cycle. Best decision ever!"
-            }].
-            map((testimonial, index) =>
-            <Card key={index}>
-                <CardContent className="p-6">
-                  <div className="flex gap-1 mb-4">
-                    {[...Array(5)].map((_, i) =>
-                  <span key={i} className="text-yellow-400">★</span>
-                  )}
-                  </div>
-                  <p className="text-gray-700 mb-4 italic">"{testimonial.text}"</p>
-                  <div>
-                    <p className="font-semibold">{testimonial.name}</p>
-                    <p className="text-sm text-gray-500">{testimonial.role}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
-      </section>
-
       {/* Contact Section */}
       <section id="contact" className="py-24 bg-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

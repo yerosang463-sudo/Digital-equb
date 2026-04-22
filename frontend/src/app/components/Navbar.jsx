@@ -45,7 +45,6 @@ export function Navbar({ variant = "default" }) {
             <a href="#features" className="font-medium hover:text-blue-500 transition-colors">About</a>
             <a href="#how-it-works" className="font-medium hover:text-blue-500 transition-colors">How It Works</a>
             <a href="#pricing" className="font-medium hover:text-blue-500 transition-colors">Pricing</a>
-            <a href="#testimonials" className="font-medium hover:text-blue-500 transition-colors">Testimonials</a>
             <a href="#contact" className="font-medium hover:text-blue-500 transition-colors">Contact</a>
           </div>
 
@@ -78,7 +77,6 @@ export function Navbar({ variant = "default" }) {
               <a href="#features" className="font-medium" onClick={() => setMobileMenuOpen(false)}>About</a>
               <a href="#how-it-works" className="font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
               <a href="#pricing" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-              <a href="#testimonials" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Testimonials</a>
               <a href="#contact" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Contact</a>
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" className="w-full" onClick={() => setMobileMenuOpen(false)}>
