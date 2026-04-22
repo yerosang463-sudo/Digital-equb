@@ -60,6 +60,27 @@ export function BrowseGroupsPage() {
     });
   }, [groups, searchQuery, filterStatus]);
 
+  async function handleJoin(groupId) {
+    try {
+      const response = await apiRequest(`/api/groups/${groupId}/join`, { method: "POST" });
+      const updatedGroup = response.group;
+      setGroups((current) =>
+        current.map((g) =>
+          g.id === groupId
+            ? {
+                ...g,
+                display_status: updatedGroup?.display_status ?? g.display_status,
+                is_member: true,
+                member_count: updatedGroup?.member_count ?? g.member_count,
+              }
+            : g
+        )
+      );
+    } catch (error) {
+      window.alert(error.message);
+    }
+  }
+
   async function handleCreateGroup() {
     if (!newGroup.name || !newGroup.contributionAmount || !newGroup.maxMembers) {
       window.alert("Please fill in all required group fields.");
@@ -212,9 +233,10 @@ export function BrowseGroupsPage() {
             contributionAmount={Number(group.contribution_amount)}
             progress={group.progress_percentage}
             admin={group.admin_name || group.creator_name}
-            status={group.display_status}
+            display_status={group.display_status}
             frequency={group.frequency}
             isMember={Boolean(group.is_member)}
+            onJoin={() => handleJoin(group.id)}
           />
         ))}
       </div>

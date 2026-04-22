@@ -5,6 +5,7 @@ const { pool } = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 const {
   createNotification,
+  deriveDisplayStatus,
   ensureCycleTotalRounds,
   ensureCurrentRound,
   ensureRoundPaymentsForMembers,
@@ -16,6 +17,7 @@ const {
   sendRoundReminders,
   closeCurrentRound,
 } = require('../utils/equb');
+const { canViewGroup, canJoinGroup } = require('../utils/groupAccess');
 
 function normalizeGroup(group) {
   const memberCount = Number(group.member_count ?? group.current_members ?? 0);
@@ -28,10 +30,9 @@ function normalizeGroup(group) {
     total_rounds: totalRounds,
     current_round_number: currentRound,
     progress_percentage: totalRounds > 0 ? Math.min(100, Math.round((currentRound / totalRounds) * 100)) : 0,
-    display_status:
-      group.status === 'open' && memberCount >= Number(group.max_members || 0)
-        ? 'full'
-        : group.status,
+    display_status: deriveDisplayStatus({ ...group, member_count: memberCount }),
+    is_public: group.is_public ? true : false,
+    is_member: group.is_member ? true : false,
   };
 }
 
@@ -62,7 +63,8 @@ async function fetchGroupDetails(groupId, userId) {
         winner.full_name AS current_winner_name,
         latest_payout.round_number AS latest_winner_round_number,
         latest_winner.full_name AS latest_winner_name,
-        my_member.role AS my_role
+        my_member.role AS my_role,
+        CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member
       FROM equb_groups g
       JOIN users creator ON creator.id = g.created_by
       LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
@@ -190,7 +192,8 @@ router.get('/', authenticate, async (req, res, next) => {
         current_round.round_number AS current_round_number,
         current_round.due_date AS next_payment_date,
         winner.full_name AS current_winner_name,
-        my_member.user_id IS NOT NULL AS is_member,
+        g.is_public,
+        CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member,
         my_member.role = 'admin' AS is_admin
       FROM equb_groups g
       JOIN users creator ON creator.id = g.created_by
@@ -309,6 +312,10 @@ router.get('/:id', authenticate, async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Group not found' });
     }
 
+    if (!canViewGroup(req.user, details.group)) {
+      return res.status(403).json({ success: false, message: 'You do not have permission to view this group' });
+    }
+
     res.json({ success: true, ...details });
   } catch (err) {
     next(err);
@@ -329,6 +336,7 @@ router.post(
     body('end_date').optional().isDate().withMessage('Invalid end date'),
     body('winner_selection_mode').optional().isIn(['manual', 'random']),
     body('auto_select_winner').optional().isBoolean(),
+    body('is_public').optional().isBoolean(),
   ],
   async (req, res, next) => {
     const errors = validationResult(req);
@@ -346,6 +354,7 @@ router.post(
       end_date,
       winner_selection_mode = 'random',
       auto_select_winner = winner_selection_mode === 'random',
+      is_public = false,
     } = req.body;
 
     const conn = await pool.getConnection();
@@ -366,9 +375,10 @@ router.post(
           end_date,
           winner_selection_mode,
           auto_select_winner,
+          is_public,
           created_by
         )
-         VALUES (?, ?, ?, ?, ?, 1, NULL, 'open', ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, 1, NULL, 'open', ?, ?, ?, ?, ?, ?)`,
         [
           name,
           description || null,
@@ -379,6 +389,7 @@ router.post(
           end_date || null,
           winner_selection_mode,
           auto_select_winner ? 1 : 0,
+          is_public ? 1 : 0,
           req.user.id,
         ]
       );
@@ -474,7 +485,7 @@ router.post('/:id/join', authenticate, async (req, res, next) => {
     await conn.beginTransaction();
 
     const group = await getGroupById(conn, req.params.id);
-    if (!group || group.status !== 'open') {
+    if (!group) {
       await conn.rollback();
       return res.status(404).json({ success: false, message: 'Group not found or not open for new members' });
     }
@@ -484,14 +495,19 @@ router.post('/:id/join', authenticate, async (req, res, next) => {
       [req.params.id, req.user.id]
     );
 
-    if (existing.length > 0) {
+    const joinCheck = canJoinGroup(req.user, { ...group, is_member: existing.length > 0 });
+    if (!joinCheck.allowed) {
       await conn.rollback();
-      return res.status(409).json({ success: false, message: 'You are already a member of this group' });
-    }
-
-    if (Number(group.member_count) >= Number(group.max_members)) {
-      await conn.rollback();
-      return res.status(400).json({ success: false, message: 'Group is full' });
+      if (joinCheck.reason === 'already_member') {
+        return res.status(409).json({ success: false, message: 'You are already a member of this group' });
+      }
+      if (joinCheck.reason === 'not_open') {
+        return res.status(400).json({ success: false, message: 'Group is not open for new members' });
+      }
+      if (joinCheck.reason === 'full') {
+        return res.status(400).json({ success: false, message: 'Group is full' });
+      }
+      return res.status(400).json({ success: false, message: 'Cannot join this group' });
     }
 
     const nextOrder = Number(group.member_count) + 1;
