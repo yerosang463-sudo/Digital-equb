@@ -21,6 +21,8 @@ function initials(name) {
 export function ProfilePage() {
   const { setUser } = useAuth();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [profile, setProfile] = useState({
     full_name: "",
     email: "",
@@ -62,9 +64,12 @@ export function ProfilePage() {
     return () => {
       ignore = true;
     };
-  }, [setUser]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleUpdateProfile() {
+    setSaving(true);
+    setSaveSuccess(false);
     try {
       const response = await apiRequest("/api/users/profile", {
         method: "PUT",
@@ -72,13 +77,17 @@ export function ProfilePage() {
           full_name: profile.full_name,
           email: profile.email,
           phone: profile.phone,
+          bio: profile.bio,
         },
       });
       setProfile((current) => ({ ...current, ...response.user }));
       setUser(response.user);
-      window.alert("Profile updated successfully!");
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
       window.alert(error.message);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -174,7 +183,7 @@ export function ProfilePage() {
                 <Label htmlFor="name">Full Name</Label>
                 <Input
                   id="name"
-                  value={profile.full_name}
+                  value={profile.full_name || ""}
                   onChange={(event) => setProfile({ ...profile, full_name: event.target.value })}
                 />
               </div>
@@ -183,7 +192,7 @@ export function ProfilePage() {
                 <Input
                   id="email"
                   type="email"
-                  value={profile.email}
+                  value={profile.email || ""}
                   onChange={(event) => setProfile({ ...profile, email: event.target.value })}
                 />
               </div>
@@ -192,13 +201,32 @@ export function ProfilePage() {
                 <Input
                   id="phone"
                   type="tel"
+                  placeholder="+251911234567"
                   value={profile.phone || ""}
                   onChange={(event) => setProfile({ ...profile, phone: event.target.value })}
                 />
               </div>
-              <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={handleUpdateProfile}>
-                Save Changes
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Input
+                  id="bio"
+                  placeholder="Tell us a bit about yourself"
+                  value={profile.bio || ""}
+                  onChange={(event) => setProfile({ ...profile, bio: event.target.value })}
+                />
+              </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
+                  onClick={handleUpdateProfile}
+                  disabled={saving}
+                >
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
+                {saveSuccess && (
+                  <span className="text-sm text-green-600 font-medium">✓ Profile updated successfully</span>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

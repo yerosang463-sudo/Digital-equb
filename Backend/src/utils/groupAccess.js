@@ -1,13 +1,13 @@
 /**
- * Determines if a user can view a group.
- * Access is based solely on membership — is_public has no effect.
+ * Determines if a user can view a group's details.
+ * Access is granted if the group is public OR the user is a member.
  *
  * @param {object} user - The current user
- * @param {object} group - The group object (must have is_member)
+ * @param {object} group - The group object (must have is_member and is_public)
  * @returns {boolean}
  */
 function canViewGroup(user, group) {
-  return Boolean(group.is_member);
+  return Boolean(group.is_public) || Boolean(group.is_member);
 }
 
 /**

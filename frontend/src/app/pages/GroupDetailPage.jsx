@@ -592,15 +592,15 @@ export function GroupDetailPage() {
                   </div>
                 ))}
                 <div className="pt-2">
-                  {!isMember ? (
+                  {!isMember && group.status === 'open' ? (
                     <Button
                       className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
                       onClick={handleJoinGroup}
-                      disabled={busyAction === "join" || group.status !== "open"}
+                      disabled={busyAction === "join"}
                     >
                       {busyAction === "join" ? "Joining..." : "Join Group"}
                     </Button>
-                  ) : (
+                  ) : isMember ? (
                     <Button
                       className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90"
                       onClick={() => navigate(`/dashboard/payments?groupId=${groupId}`)}
@@ -608,7 +608,7 @@ export function GroupDetailPage() {
                       <DollarSign className="w-4 h-4 mr-2" />
                       Make Payment
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

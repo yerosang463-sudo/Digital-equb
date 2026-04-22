@@ -236,6 +236,7 @@ export function BrowseGroupsPage() {
             display_status={group.display_status}
             frequency={group.frequency}
             isMember={Boolean(group.is_member)}
+            isPublic={Boolean(group.is_public)}
             onJoin={() => handleJoin(group.id)}
           />
         ))}

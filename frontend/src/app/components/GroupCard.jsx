@@ -16,8 +16,9 @@ import { Link } from "react-router";
 
 
 
-function ActionArea({ id, isMember, display_status, onJoin }) {
-  if (isMember) {
+function ActionArea({ id, isMember, isPublic, display_status, onJoin }) {
+  // Public groups and members always get "View Details"
+  if (isMember || isPublic) {
     return (
       <Link to={`/dashboard/groups/${id}`} className="w-full">
         <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">View Details</Button>
@@ -62,6 +63,7 @@ export function GroupCard({
   status = "active",
   frequency = "monthly",
   isMember = false,
+  isPublic = false,
   onJoin,
 }) {
   const resolvedStatus = display_status ?? status;
@@ -104,7 +106,7 @@ export function GroupCard({
         </div>
       </CardContent>
       <CardFooter>
-        <ActionArea id={id} isMember={isMember} display_status={resolvedStatus} onJoin={onJoin} />
+        <ActionArea id={id} isMember={isMember} isPublic={isPublic} display_status={resolvedStatus} onJoin={onJoin} />
       </CardFooter>
     </Card>
   );
