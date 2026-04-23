@@ -19,6 +19,11 @@ const requireAdmin = (req, res, next) => {
  */
 const requirePermission = (requiredPermission) => {
   return (req, res, next) => {
+    // Admins have full access across the admin dashboard actions.
+    if (req.user?.isAdmin) {
+      return next();
+    }
+
     if (!req.user || !req.user.permissions) {
       return res.status(403).json({ 
         success: false, 
@@ -62,6 +67,11 @@ const requirePermission = (requiredPermission) => {
  */
 const requireAllPermissions = (requiredPermissions) => {
   return (req, res, next) => {
+    // Admins have full access across the admin dashboard actions.
+    if (req.user?.isAdmin) {
+      return next();
+    }
+
     if (!req.user || !req.user.permissions) {
       return res.status(403).json({ 
         success: false, 

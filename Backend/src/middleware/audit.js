@@ -79,9 +79,42 @@ const getAuditLogs = async (req, res) => {
     
     const offset = (page - 1) * limit;
     
+    const [auditTableRows] = await pool.execute(`SHOW TABLES LIKE 'admin_actions'`);
+    if (!auditTableRows.length) {
+      return res.json({
+        success: true,
+        data: {
+          logs: [],
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: 0,
+            pages: 0,
+          },
+        },
+      });
+    }
+
+    const [auditColumns] = await pool.execute('SHOW COLUMNS FROM admin_actions');
+    const auditColumnSet = new Set(auditColumns.map((column) => column.Field));
+
+    const hasActionType = auditColumnSet.has('action_type');
+    const hasTargetType = auditColumnSet.has('target_type');
+    const hasTargetId = auditColumnSet.has('target_id');
+    const hasDetails = auditColumnSet.has('details');
+    const hasIpAddress = auditColumnSet.has('ip_address');
+    const hasCreatedAt = auditColumnSet.has('created_at');
+
     let query = `
-      SELECT 
-        aa.*,
+      SELECT
+        aa.id,
+        aa.admin_user_id,
+        ${hasActionType ? 'aa.action_type' : 'NULL'} as action_type,
+        ${hasTargetType ? 'aa.target_type' : 'NULL'} as target_type,
+        ${hasTargetId ? 'aa.target_id' : 'NULL'} as target_id,
+        ${hasDetails ? 'aa.details' : 'NULL'} as details,
+        ${hasIpAddress ? 'aa.ip_address' : 'NULL'} as ip_address,
+        ${hasCreatedAt ? 'aa.created_at' : 'NOW()'} as created_at,
         u.email as admin_email,
         u.full_name as admin_name
       FROM admin_actions aa
@@ -96,30 +129,38 @@ const getAuditLogs = async (req, res) => {
       params.push(admin_user_id);
     }
     
-    if (action_type) {
+    if (action_type && hasActionType) {
       query += ' AND aa.action_type = ?';
       params.push(action_type);
     }
     
-    if (target_type) {
+    if (target_type && hasTargetType) {
       query += ' AND aa.target_type = ?';
       params.push(target_type);
     }
     
-    if (start_date) {
+    if (start_date && hasCreatedAt) {
       query += ' AND DATE(aa.created_at) >= ?';
       params.push(start_date);
     }
     
-    if (end_date) {
+    if (end_date && hasCreatedAt) {
       query += ' AND DATE(aa.created_at) <= ?';
       params.push(end_date);
     }
     
     if (search) {
-      query += ' AND (u.email LIKE ? OR u.full_name LIKE ? OR aa.action_type LIKE ?)';
+      const searchFields = ['u.email LIKE ?', 'u.full_name LIKE ?'];
+      if (hasActionType) {
+        searchFields.push('aa.action_type LIKE ?');
+      }
+
+      query += ` AND (${searchFields.join(' OR ')})`;
       const searchTerm = `%${search}%`;
-      params.push(searchTerm, searchTerm, searchTerm);
+      params.push(searchTerm, searchTerm);
+      if (hasActionType) {
+        params.push(searchTerm);
+      }
     }
     
     // Get total count
@@ -128,7 +169,7 @@ const getAuditLogs = async (req, res) => {
     const total = countRows[0].total;
     
     // Add ordering and pagination
-    query += ' ORDER BY aa.created_at DESC LIMIT ? OFFSET ?';
+    query += ` ORDER BY ${hasCreatedAt ? 'aa.created_at' : 'aa.id'} DESC LIMIT ? OFFSET ?`;
     params.push(parseInt(limit), parseInt(offset));
     
     const [rows] = await pool.execute(query, params);

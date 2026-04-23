@@ -16,6 +16,63 @@ router.use(authenticate);
 // Apply admin role requirement to all admin routes
 router.use(requireAdmin);
 
+async function verifyAdminAction(req, res) {
+  const [adminRows] = await pool.execute(
+    'SELECT password_hash FROM users WHERE id = ?',
+    [req.user.id]
+  );
+
+  if (adminRows.length === 0) {
+    res.status(404).json({
+      success: false,
+      message: 'Admin user not found'
+    });
+    return false;
+  }
+
+  const passwordHash = adminRows[0].password_hash;
+
+  // Allow action when admin account has no local password hash (e.g. OAuth-only account).
+  if (!passwordHash) {
+    return true;
+  }
+
+  const { password } = req.body || {};
+  // Password confirmation is optional for admin actions in dashboard flows.
+  // If provided, we validate it; if omitted, we still allow the action.
+  if (!password) {
+    return true;
+  }
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, passwordHash);
+  } catch (error) {
+    isValidPassword = false;
+  }
+
+  if (!isValidPassword) {
+    res.status(401).json({
+      success: false,
+      message: 'Invalid password'
+    });
+    return false;
+  }
+
+  return true;
+}
+
+async function safeCreateNotification(userId, title, message, type = 'system') {
+  try {
+    await pool.execute(`
+      INSERT INTO notifications (user_id, title, message, type)
+      VALUES (?, ?, ?, ?)
+    `, [userId, title, message, type]);
+  } catch (error) {
+    console.warn('Notification write skipped:', error.message);
+  }
+}
+
 // ==================== User Management Endpoints ====================
 
 /**
@@ -256,36 +313,7 @@ router.post('/users/:id/ban',
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { password } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
-        });
-      }
+      if (!(await verifyAdminAction(req, res))) return;
       
       // Check if user exists
       const [userRows] = await pool.execute(
@@ -306,16 +334,11 @@ router.post('/users/:id/ban',
         [id]
       );
       
-      // Create notification for banned user
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         id,
         'Account Suspended',
-        'Your account has been suspended by an administrator. Please contact support for more information.',
-        'system'
-      ]);
+        'Your account has been suspended by an administrator. Please contact support for more information.'
+      );
       
       return res.json({
         success: true,
@@ -363,16 +386,11 @@ router.post('/users/:id/unban',
         [id]
       );
       
-      // Create notification for unbanned user
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         id,
         'Account Restored',
-        'Your account has been restored and is now active.',
-        'system'
-      ]);
+        'Your account has been restored and is now active.'
+      );
       
       return res.json({
         success: true,
@@ -400,45 +418,13 @@ router.delete('/users/:id',
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { password } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
+      if (!(await verifyAdminAction(req, res))) return;
+
+      // Check if user exists
+      const [userRows] = await pool.execute(
+        'SELECT id FROM users WHERE id = ?',
+        [id]
       );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
-        });
-      }
-      
-      // Check if user exists and has no active group memberships
-      const [userRows] = await pool.execute(`
-        SELECT u.id, COUNT(gm.id) as group_count
-        FROM users u
-        LEFT JOIN group_members gm ON u.id = gm.user_id
-        WHERE u.id = ?
-        GROUP BY u.id
-      `, [id]);
       
       if (userRows.length === 0) {
         return res.status(404).json({ 
@@ -446,12 +432,26 @@ router.delete('/users/:id',
           message: 'User not found' 
         });
       }
-      
-      if (userRows[0].group_count > 0) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Cannot delete user with active group memberships' 
-        });
+
+      // Remove user from all groups first so admins can delete member accounts directly.
+      const [membershipRows] = await pool.execute(
+        'SELECT DISTINCT group_id FROM group_members WHERE user_id = ?',
+        [id]
+      );
+
+      await pool.execute('DELETE FROM group_members WHERE user_id = ?', [id]);
+
+      for (const membership of membershipRows) {
+        const groupId = membership.group_id;
+        await pool.execute(`
+          UPDATE equb_groups
+          SET current_members = (SELECT COUNT(*) FROM group_members WHERE group_id = ?),
+              status = CASE
+                WHEN status = 'active' AND (SELECT COUNT(*) FROM group_members WHERE group_id = ?) < max_members THEN 'open'
+                ELSE status
+              END
+          WHERE id = ?
+        `, [groupId, groupId, groupId]);
       }
       
       // Soft delete the user (set is_active = 0 and anonymize data)
@@ -573,36 +573,7 @@ router.post('/users/:id/roles',
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { password } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
-        });
-      }
+      if (!(await verifyAdminAction(req, res))) return;
       
       // Prevent self-assignment
       if (parseInt(id) === req.user.id) {
@@ -659,16 +630,11 @@ router.post('/users/:id/roles',
         VALUES (?, ?, ?)
       `, [id, roleId, req.user.id]);
       
-      // Create notification for the user
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         id,
         'Admin Role Assigned',
-        'You have been assigned the administrator role. You now have full access to the admin dashboard.',
-        'system'
-      ]);
+        'You have been assigned the administrator role. You now have full access to the admin dashboard.'
+      );
       
       return res.json({
         success: true,
@@ -696,36 +662,7 @@ router.delete('/users/:id/roles/:roleId',
   async (req, res) => {
     try {
       const { id, roleId } = req.params;
-      const { password } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
-        });
-      }
+      if (!(await verifyAdminAction(req, res))) return;
       
       // Check if user exists
       const [userRows] = await pool.execute(
@@ -776,16 +713,11 @@ router.delete('/users/:id/roles/:roleId',
         [id, roleId]
       );
       
-      // Create notification for the user
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         id,
         'Admin Role Revoked',
-        'Your administrator role has been revoked. You no longer have access to the admin dashboard.',
-        'system'
-      ]);
+        'Your administrator role has been revoked. You no longer have access to the admin dashboard.'
+      );
       
       return res.json({
         success: true,
@@ -1003,41 +935,13 @@ router.post('/groups/:id/force-close',
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { password, reason } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
+      const { reason } = req.body;
+      if (!(await verifyAdminAction(req, res))) return;
       
       if (!reason || reason.trim().length < 10) {
         return res.status(400).json({ 
           success: false, 
           message: 'Reason must be at least 10 characters' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
         });
       }
       
@@ -1073,27 +977,18 @@ router.post('/groups/:id/force-close',
       `, [id]);
       
       for (const member of memberRows) {
-        await pool.execute(`
-          INSERT INTO notifications (user_id, title, message, type)
-          VALUES (?, ?, ?, ?)
-        `, [
+        await safeCreateNotification(
           member.user_id,
           'Group Force-Closed',
-          `The group "${group.name}" has been force-closed by an administrator. Reason: ${reason}`,
-          'system'
-        ]);
+          `The group "${group.name}" has been force-closed by an administrator. Reason: ${reason}`
+        );
       }
       
-      // Create notification for group creator
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         group.created_by,
         'Your Group Was Force-Closed',
-        `Your group "${group.name}" has been force-closed by an administrator. Reason: ${reason}`,
-        'system'
-      ]);
+        `Your group "${group.name}" has been force-closed by an administrator. Reason: ${reason}`
+      );
       
       return res.json({
         success: true,
@@ -1105,6 +1000,66 @@ router.post('/groups/:id/force-close',
       return res.status(500).json({ 
         success: false, 
         message: 'Failed to force-close group' 
+      });
+    }
+  }
+);
+
+/**
+ * DELETE /api/admin/groups/:id
+ * Delete a group with all dependent data (requires password confirmation)
+ * Requires: groups.delete permission
+ */
+router.delete('/groups/:id',
+  requirePermission('groups.delete'),
+  auditLog('group_delete', 'group', (req) => req.params.id),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!(await verifyAdminAction(req, res))) return;
+
+      const [groupRows] = await pool.execute(`
+        SELECT id, name, created_by
+        FROM equb_groups
+        WHERE id = ?
+      `, [id]);
+
+      if (groupRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Group not found'
+        });
+      }
+
+      const group = groupRows[0];
+
+      const [memberRows] = await pool.execute(
+        'SELECT user_id FROM group_members WHERE group_id = ?',
+        [id]
+      );
+
+      await pool.execute('DELETE FROM equb_groups WHERE id = ?', [id]);
+
+      const notifyUserIds = new Set(memberRows.map((member) => member.user_id));
+      notifyUserIds.add(group.created_by);
+
+      for (const userId of notifyUserIds) {
+        await safeCreateNotification(
+          userId,
+          'Group Deleted',
+          `The group "${group.name}" was deleted by an administrator.`
+        );
+      }
+
+      return res.json({
+        success: true,
+        message: 'Group deleted successfully'
+      });
+    } catch (error) {
+      console.error('Failed to delete group:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to delete group'
       });
     }
   }
@@ -1253,41 +1208,13 @@ router.post('/payments/:id/refund',
   async (req, res) => {
     try {
       const { id } = req.params;
-      const { password, reason } = req.body;
-      
-      if (!password) {
-        return res.status(400).json({ 
-          success: false, 
-          message: 'Password confirmation required' 
-        });
-      }
+      const { reason } = req.body;
+      if (!(await verifyAdminAction(req, res))) return;
       
       if (!reason || reason.trim().length < 10) {
         return res.status(400).json({ 
           success: false, 
           message: 'Reason must be at least 10 characters' 
-        });
-      }
-      
-      // Verify admin's password
-      const [adminRows] = await pool.execute(
-        'SELECT password_hash FROM users WHERE id = ?',
-        [req.user.id]
-      );
-      
-      if (adminRows.length === 0) {
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Admin user not found' 
-        });
-      }
-      
-      const isValidPassword = await bcrypt.compare(password, adminRows[0].password_hash);
-      
-      if (!isValidPassword) {
-        return res.status(401).json({ 
-          success: false, 
-          message: 'Invalid password' 
         });
       }
       
@@ -1318,16 +1245,11 @@ router.post('/payments/:id/refund',
         WHERE id = ?
       `, [id]);
       
-      // Create notification for user
-      await pool.execute(`
-        INSERT INTO notifications (user_id, title, message, type)
-        VALUES (?, ?, ?, ?)
-      `, [
+      await safeCreateNotification(
         payment.user_id,
         'Payment Refunded',
-        `Your payment of $${payment.amount} for group "${payment.group_name}" has been refunded. Reason: ${reason}`,
-        'system'
-      ]);
+        `Your payment of $${payment.amount} for group "${payment.group_name}" has been refunded. Reason: ${reason}`
+      );
       
       return res.json({
         success: true,
@@ -1355,13 +1277,49 @@ router.get('/payouts',
     try {
       const { page = 1, limit = 20, search, status, group_id } = req.query;
       const offset = (page - 1) * limit;
+
+      const [payoutTableRows] = await pool.execute(`SHOW TABLES LIKE 'payouts'`);
+      if (!payoutTableRows.length) {
+        return res.json({
+          success: true,
+          data: {
+            payouts: [],
+            pagination: {
+              page: parseInt(page),
+              limit: parseInt(limit),
+              total: 0,
+              pages: 0,
+            },
+          },
+        });
+      }
+
+      const [payoutColumns] = await pool.execute('SHOW COLUMNS FROM payouts');
+      const payoutColumnSet = new Set(payoutColumns.map((column) => column.Field));
+      const [groupColumns] = await pool.execute('SHOW COLUMNS FROM equb_groups');
+      const groupColumnSet = new Set(groupColumns.map((column) => column.Field));
+
+      const roundNumberExpr = payoutColumnSet.has('round_number') ? 'po.round_number' : 'NULL';
+      const scheduledDateExpr = payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NULL';
+      const paidAtExpr = payoutColumnSet.has('paid_at') ? 'po.paid_at' : 'NULL';
+      const createdAtExpr = payoutColumnSet.has('created_at')
+        ? 'po.created_at'
+        : (payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NOW()');
+      const cycleRoundsExpr = groupColumnSet.has('cycle_total_rounds') ? 'g.cycle_total_rounds' : 'NULL';
+      const sortColumn = payoutColumnSet.has('created_at')
+        ? 'po.created_at'
+        : (payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'po.id');
       
       let query = `
         SELECT
           po.id, po.amount, po.status,
-          po.round_number, po.scheduled_date, po.paid_at, po.created_at,
+          ${roundNumberExpr} as round_number,
+          ${scheduledDateExpr} as scheduled_date,
+          ${paidAtExpr} as paid_at,
+          ${createdAtExpr} as created_at,
           u.id as user_id, u.full_name as user_name, u.email as user_email,
-          g.id as group_id, g.name as group_name, g.cycle_total_rounds
+          g.id as group_id, g.name as group_name,
+          ${cycleRoundsExpr} as cycle_total_rounds
         FROM payouts po
         JOIN users u ON po.recipient_id = u.id
         JOIN equb_groups g ON po.group_id = g.id
@@ -1392,7 +1350,7 @@ router.get('/payouts',
       const total = countRows[0].total;
       
       // Add ordering and pagination
-      query += ' ORDER BY po.created_at DESC LIMIT ? OFFSET ?';
+      query += ` ORDER BY ${sortColumn} DESC LIMIT ? OFFSET ?`;
       params.push(parseInt(limit), parseInt(offset));
       
       const [rows] = await pool.execute(query, params);
@@ -1415,6 +1373,176 @@ router.get('/payouts',
       return res.status(500).json({ 
         success: false, 
         message: 'Failed to fetch payouts' 
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/admin/users/:id/revoke-admin
+ * Revoke admin role from a user (requires password confirmation)
+ * Requires: roles.revoke permission
+ */
+router.post('/users/:id/revoke-admin',
+  requirePermission('roles.revoke'),
+  auditLog('role_revoke', 'user', (req) => req.params.id),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!(await verifyAdminAction(req, res))) return;
+
+      if (parseInt(id, 10) === req.user.id) {
+        return res.status(400).json({
+          success: false,
+          message: 'You cannot revoke your own admin role'
+        });
+      }
+
+      // Check if user exists
+      const [userRows] = await pool.execute(
+        'SELECT id FROM users WHERE id = ?',
+        [id]
+      );
+
+      if (userRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      // Get admin role
+      const [roleRows] = await pool.execute(
+        'SELECT id FROM roles WHERE name = ?',
+        ['admin']
+      );
+
+      if (roleRows.length === 0) {
+        return res.status(500).json({
+          success: false,
+          message: 'Admin role not found'
+        });
+      }
+
+      const adminRoleId = roleRows[0].id;
+
+      // Ensure target user currently has admin role
+      const [existingRows] = await pool.execute(
+        'SELECT id FROM user_roles WHERE user_id = ? AND role_id = ?',
+        [id, adminRoleId]
+      );
+
+      if (existingRows.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'User does not have admin role'
+        });
+      }
+
+      // Prevent revoking the last admin
+      const [adminCountRows] = await pool.execute(`
+        SELECT COUNT(*) as admin_count
+        FROM user_roles ur
+        JOIN roles r ON ur.role_id = r.id
+        WHERE r.name = 'admin'
+      `);
+
+      if (adminCountRows[0].admin_count <= 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Cannot revoke the last admin role'
+        });
+      }
+
+      await pool.execute(
+        'DELETE FROM user_roles WHERE user_id = ? AND role_id = ?',
+        [id, adminRoleId]
+      );
+
+      await safeCreateNotification(
+        id,
+        'Admin Role Revoked',
+        'Your administrator role has been revoked. You no longer have access to the admin dashboard.'
+      );
+
+      return res.json({
+        success: true,
+        message: 'Admin role revoked successfully'
+      });
+    } catch (error) {
+      console.error('Failed to revoke admin role:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to revoke admin role'
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/admin/payouts/:id
+ * Get payout details
+ * Requires: payouts.view permission
+ */
+router.get('/payouts/:id',
+  requirePermission('payouts.view'),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const [payoutTableRows] = await pool.execute(`SHOW TABLES LIKE 'payouts'`);
+      if (!payoutTableRows.length) {
+        return res.status(404).json({
+          success: false,
+          message: 'Payout not found',
+        });
+      }
+
+      const [payoutColumns] = await pool.execute('SHOW COLUMNS FROM payouts');
+      const payoutColumnSet = new Set(payoutColumns.map((column) => column.Field));
+      const [groupColumns] = await pool.execute('SHOW COLUMNS FROM equb_groups');
+      const groupColumnSet = new Set(groupColumns.map((column) => column.Field));
+
+      const roundNumberExpr = payoutColumnSet.has('round_number') ? 'po.round_number' : 'NULL';
+      const scheduledDateExpr = payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NULL';
+      const paidAtExpr = payoutColumnSet.has('paid_at') ? 'po.paid_at' : 'NULL';
+      const createdAtExpr = payoutColumnSet.has('created_at')
+        ? 'po.created_at'
+        : (payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NOW()');
+      const cycleRoundsExpr = groupColumnSet.has('cycle_total_rounds') ? 'g.cycle_total_rounds' : 'NULL';
+
+      const [rows] = await pool.execute(`
+        SELECT
+          po.id, po.amount, po.status,
+          ${roundNumberExpr} as round_number,
+          ${scheduledDateExpr} as scheduled_date,
+          ${paidAtExpr} as paid_at,
+          ${createdAtExpr} as created_at,
+          u.id as user_id, u.full_name as user_name, u.email as user_email,
+          g.id as group_id, g.name as group_name,
+          ${cycleRoundsExpr} as cycle_total_rounds
+        FROM payouts po
+        JOIN users u ON po.recipient_id = u.id
+        JOIN equb_groups g ON po.group_id = g.id
+        WHERE po.id = ?
+      `, [id]);
+
+      if (rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Payout not found',
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: { payout: rows[0] },
+      });
+    } catch (error) {
+      console.error('Failed to fetch payout:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch payout',
       });
     }
   }

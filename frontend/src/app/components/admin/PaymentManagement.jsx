@@ -50,8 +50,10 @@ const PaymentManagement = () => {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPayment, setSelectedPayment] = useState(null);
+  const [selectedPayout, setSelectedPayout] = useState(null);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showPayoutDetailsDialog, setShowPayoutDetailsDialog] = useState(false);
   const [password, setPassword] = useState('');
   const [reason, setReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -82,7 +84,7 @@ const PaymentManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch payments:', err);
-      setError('Failed to load payments');
+      setError(err.message || 'Failed to load payments');
     } finally {
       setLoading(false);
     }
@@ -101,7 +103,7 @@ const PaymentManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch payouts:', err);
-      setError('Failed to load payouts');
+      setError(err.message || 'Failed to load payouts');
     } finally {
       setLoading(false);
     }
@@ -114,10 +116,10 @@ const PaymentManagement = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(payment => 
-        payment.transaction_id?.toLowerCase().includes(term) ||
-        payment.user_name?.toLowerCase().includes(term) ||
-        payment.user_email?.toLowerCase().includes(term) ||
-        payment.group_name?.toLowerCase().includes(term)
+        String(payment.transaction_id || `PAY-${payment.id}`).toLowerCase().includes(term) ||
+        String(payment.user_name || '').toLowerCase().includes(term) ||
+        String(payment.user_email || '').toLowerCase().includes(term) ||
+        String(payment.group_name || '').toLowerCase().includes(term)
       );
     }
     
@@ -152,7 +154,7 @@ const PaymentManagement = () => {
       }
     } catch (err) {
       console.error('Failed to refund payment:', err);
-      setError('Failed to refund payment');
+      setError(err.message || 'Failed to refund payment');
     } finally {
       setActionLoading(false);
     }
@@ -170,7 +172,30 @@ const PaymentManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch payment details:', err);
-      setError('Failed to fetch payment details');
+      setError(err.message || 'Failed to fetch payment details');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const fetchPayoutDetails = async (payout) => {
+    try {
+      setActionLoading(true);
+
+      const response = await apiRequest(`/api/admin/payouts/${payout.id}`);
+
+      if (response.success) {
+        setSelectedPayout(response.data.payout);
+      } else {
+        setSelectedPayout(payout);
+      }
+      setShowPayoutDetailsDialog(true);
+    } catch (err) {
+      console.error('Failed to fetch payout details:', err);
+      // Fall back to the table row data so the action still works.
+      setSelectedPayout(payout);
+      setShowPayoutDetailsDialog(true);
+      setError(err.message || 'Failed to fetch full payout details');
     } finally {
       setActionLoading(false);
     }
@@ -401,7 +426,7 @@ const PaymentManagement = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => fetchPayoutDetails(payout)}>
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
@@ -478,9 +503,67 @@ const PaymentManagement = () => {
             <Button 
               variant="destructive" 
               onClick={() => handleRefundPayment(selectedPayment?.id)}
-              disabled={!password || !reason || reason.length < 10 || actionLoading}
+              disabled={!reason || reason.length < 10 || actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Process Refund'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payout Details Dialog */}
+      <Dialog open={showPayoutDetailsDialog} onOpenChange={setShowPayoutDetailsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Payout Details</DialogTitle>
+            <DialogDescription>
+              Detailed information about payout transaction
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPayout && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Payout ID</Label>
+                  <p className="font-mono text-sm">{selectedPayout.transaction_id || `OUT-${selectedPayout.id}`}</p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <div className="mt-1">{getStatusBadge(selectedPayout.status)}</div>
+                </div>
+                <div>
+                  <Label>Recipient</Label>
+                  <p>{selectedPayout.user_name}</p>
+                  <p className="text-sm text-gray-500">{selectedPayout.user_email}</p>
+                </div>
+                <div>
+                  <Label>Group</Label>
+                  <p>{selectedPayout.group_name}</p>
+                </div>
+                <div>
+                  <Label>Amount</Label>
+                  <p className="font-medium">${selectedPayout.amount}</p>
+                </div>
+                <div>
+                  <Label>Round</Label>
+                  <p>{selectedPayout.round_number ? `Round ${selectedPayout.round_number}` : 'N/A'}</p>
+                </div>
+                <div>
+                  <Label>Scheduled Date</Label>
+                  <p className="text-sm">
+                    {selectedPayout.scheduled_date ? new Date(selectedPayout.scheduled_date).toLocaleDateString() : 'N/A'}
+                  </p>
+                </div>
+                <div>
+                  <Label>Created</Label>
+                  <p className="text-sm">{new Date(selectedPayout.created_at).toLocaleString()}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => setShowPayoutDetailsDialog(false)}>
+              Close
             </Button>
           </DialogFooter>
         </DialogContent>

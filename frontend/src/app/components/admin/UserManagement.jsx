@@ -16,6 +16,7 @@ import {
   Ban, 
   Edit, 
   Shield,
+  ShieldOff,
   UserX,
   UserCheck,
   Mail
@@ -28,6 +29,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { apiRequest } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 import { 
   Dialog,
   DialogContent,
@@ -35,11 +37,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '../ui/dialog';
 import { Label } from '../ui/label';
 
 const UserManagement = () => {
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +54,8 @@ const UserManagement = () => {
   const [showBanDialog, setShowBanDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAssignAdminDialog, setShowAssignAdminDialog] = useState(false);
+  const [showRevokeAdminDialog, setShowRevokeAdminDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [password, setPassword] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -127,7 +131,7 @@ const UserManagement = () => {
       }
     } catch (err) {
       console.error('Failed to ban user:', err);
-      setError('Failed to ban user');
+      setError(err.message || 'Failed to ban user');
     } finally {
       setActionLoading(false);
     }
@@ -151,7 +155,7 @@ const UserManagement = () => {
       }
     } catch (err) {
       console.error('Failed to unban user:', err);
-      setError('Failed to unban user');
+      setError(err.message || 'Failed to unban user');
     } finally {
       setActionLoading(false);
     }
@@ -179,7 +183,59 @@ const UserManagement = () => {
       }
     } catch (err) {
       console.error('Failed to assign admin role:', err);
-      setError('Failed to assign admin role');
+      setError(err.message || 'Failed to assign admin role');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    try {
+      setActionLoading(true);
+
+      const response = await apiRequest(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        body: { password }
+      });
+
+      if (response.success) {
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        setShowDeleteDialog(false);
+        setPassword('');
+        setSelectedUser(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete user:', err);
+      setError(err.message || 'Failed to delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRevokeAdminRole = async (userId) => {
+    try {
+      setActionLoading(true);
+
+      const response = await apiRequest(`/api/admin/users/${userId}/revoke-admin`, {
+        method: 'POST',
+        body: { password }
+      });
+
+      if (response.success) {
+        setUsers(prevUsers =>
+          prevUsers.map(user =>
+            user.id === userId
+              ? { ...user, roles: (user.roles || []).filter((role) => role !== 'admin') }
+              : user
+          )
+        );
+        setShowRevokeAdminDialog(false);
+        setPassword('');
+        setSelectedUser(null);
+      }
+    } catch (err) {
+      console.error('Failed to revoke admin role:', err);
+      setError(err.message || 'Failed to revoke admin role');
     } finally {
       setActionLoading(false);
     }
@@ -206,7 +262,7 @@ const UserManagement = () => {
       }
     } catch (err) {
       console.error('Failed to update user:', err);
-      setError('Failed to update user');
+      setError(err.message || 'Failed to update user');
     } finally {
       setActionLoading(false);
     }
@@ -366,16 +422,29 @@ const UserManagement = () => {
                         {!user.roles?.includes('admin') && (
                           <DropdownMenuItem onClick={() => {
                             setSelectedUser(user);
+                            setPassword('');
                             setShowAssignAdminDialog(true);
                           }}>
                             <Shield className="h-4 w-4 mr-2" />
                             Assign Admin Role
                           </DropdownMenuItem>
                         )}
+
+                        {user.roles?.includes('admin') && Number(user.id) !== Number(currentUser?.id) && (
+                          <DropdownMenuItem className="text-orange-600" onClick={() => {
+                            setSelectedUser(user);
+                            setPassword('');
+                            setShowRevokeAdminDialog(true);
+                          }}>
+                            <ShieldOff className="h-4 w-4 mr-2" />
+                            Revoke Admin Role
+                          </DropdownMenuItem>
+                        )}
                         
                         <DropdownMenuItem className="text-red-600" onClick={() => {
-                          // Soft delete user
-                          window.alert('Soft delete functionality would be implemented here');
+                          setSelectedUser(user);
+                          setPassword('');
+                          setShowDeleteDialog(true);
                         }}>
                           <UserX className="h-4 w-4 mr-2" />
                           Delete User
@@ -441,9 +510,81 @@ const UserManagement = () => {
             <Button 
               variant="destructive" 
               onClick={() => handleBanUser(selectedUser?.id)}
-              disabled={!password || actionLoading}
+              disabled={actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Ban User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete User</DialogTitle>
+            <DialogDescription>
+              Permanently deactivate and anonymize {selectedUser?.full_name}. This cannot be undone and requires password confirmation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="delete-password">Confirm Your Password</Label>
+              <Input
+                id="delete-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteUser(selectedUser?.id)}
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Processing...' : 'Delete User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Revoke Admin Role Dialog */}
+      <Dialog open={showRevokeAdminDialog} onOpenChange={setShowRevokeAdminDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revoke Admin Role</DialogTitle>
+            <DialogDescription>
+              Remove administrator role from {selectedUser?.full_name}. This action requires password confirmation.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="revoke-admin-password">Confirm Your Password</Label>
+              <Input
+                id="revoke-admin-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRevokeAdminDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleRevokeAdminRole(selectedUser?.id)}
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Processing...' : 'Revoke Admin Role'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -476,7 +617,7 @@ const UserManagement = () => {
             </Button>
             <Button 
               onClick={() => handleAssignAdminRole(selectedUser?.id)}
-              disabled={!password || actionLoading}
+              disabled={actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Assign Admin Role'}
             </Button>

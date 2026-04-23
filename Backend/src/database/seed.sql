@@ -23,7 +23,7 @@ INSERT INTO users (id, full_name, email, phone, password_hash, bio) VALUES
 (2, 'Tigist Alemayehu', 'tigist@example.com',  '+251922345678', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Savings group coordinator'),
 (3, 'Dawit Haile',      'dawit@example.com',   '+251933456789', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Finance professional'),
 (4, 'Meron Tadesse',    'meron@example.com',   '+251944567890', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Community savings advocate'),
-(5, 'System Administrator', 'yerosang463@gmail.com', '+251900000000', '$2a$10$sextGiFGU0hqdIAXw.Sk2edifMxJG1uhL4EEP49CBnUSSjtEwixAK', 'System administrator with full platform access');
+(5, 'System Administrator', 'yerosang463@gmail.com', '+251972467962', '$2a$10$sextGiFGU0hqdIAXw.Sk2edifMxJG1uhL4EEP49CBnUSSjtEwixAK', 'System administrator with full platform access');
 
 -- ─── RBAC System ─────────────────────────────────────────────────────────────
 -- Admin role with all permissions

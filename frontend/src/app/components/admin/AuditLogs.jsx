@@ -63,7 +63,7 @@ const AuditLogs = () => {
       }
     } catch (err) {
       console.error('Failed to fetch audit logs:', err);
-      setError('Failed to load audit logs');
+      setError(err.message || 'Failed to load audit logs');
     } finally {
       setLoading(false);
     }
@@ -76,10 +76,10 @@ const AuditLogs = () => {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(log => 
-        log.action_type?.toLowerCase().includes(term) ||
-        log.target_type?.toLowerCase().includes(term) ||
-        log.admin_name?.toLowerCase().includes(term) ||
-        log.details?.toLowerCase().includes(term)
+        String(log.action_type || '').toLowerCase().includes(term) ||
+        String(log.target_type || '').toLowerCase().includes(term) ||
+        String(log.admin_name || '').toLowerCase().includes(term) ||
+        String(typeof log.details === 'string' ? log.details : JSON.stringify(log.details || {})).toLowerCase().includes(term)
       );
     }
     
@@ -104,7 +104,7 @@ const AuditLogs = () => {
       role_revoke: { color: 'bg-red-100 text-red-800', label: 'Role Revoke' }
     };
     
-    const config = actionConfig[actionType] || { color: 'bg-gray-100 text-gray-800', label: actionType };
+    const config = actionConfig[actionType] || { color: 'bg-gray-100 text-gray-800', label: actionType || 'Unknown' };
     
     return (
       <Badge className={`${config.color} hover:${config.color}`}>

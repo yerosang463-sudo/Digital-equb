@@ -19,7 +19,8 @@ import {
   AlertTriangle,
   Eye,
   Edit,
-  XCircle
+  XCircle,
+  Trash2
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -53,6 +54,7 @@ const GroupManagement = () => {
   const [showForceCloseDialog, setShowForceCloseDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [password, setPassword] = useState('');
   const [reason, setReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
@@ -128,7 +130,7 @@ const GroupManagement = () => {
       }
     } catch (err) {
       console.error('Failed to force close group:', err);
-      setError('Failed to force close group');
+      setError(err.message || 'Failed to force close group');
     } finally {
       setActionLoading(false);
     }
@@ -155,7 +157,7 @@ const GroupManagement = () => {
       }
     } catch (err) {
       console.error('Failed to update group:', err);
-      setError('Failed to update group');
+      setError(err.message || 'Failed to update group');
     } finally {
       setActionLoading(false);
     }
@@ -173,7 +175,30 @@ const GroupManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch group details:', err);
-      setError('Failed to fetch group details');
+      setError(err.message || 'Failed to fetch group details');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId) => {
+    try {
+      setActionLoading(true);
+
+      const response = await apiRequest(`/api/admin/groups/${groupId}`, {
+        method: 'DELETE',
+        body: { password }
+      });
+
+      if (response.success) {
+        setGroups(prevGroups => prevGroups.filter(group => group.id !== groupId));
+        setShowDeleteDialog(false);
+        setPassword('');
+        setSelectedGroup(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete group:', err);
+      setError(err.message || 'Failed to delete group');
     } finally {
       setActionLoading(false);
     }
@@ -336,6 +361,8 @@ const GroupManagement = () => {
                             className="text-red-600"
                             onClick={() => {
                               setSelectedGroup(group);
+                              setPassword('');
+                              setReason('');
                               setShowForceCloseDialog(true);
                             }}
                           >
@@ -343,6 +370,18 @@ const GroupManagement = () => {
                             Force Close
                           </DropdownMenuItem>
                         )}
+
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            setSelectedGroup(group);
+                            setPassword('');
+                            setShowDeleteDialog(true);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Group
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -414,9 +453,45 @@ const GroupManagement = () => {
             <Button 
               variant="destructive" 
               onClick={() => handleForceCloseGroup(selectedGroup?.id)}
-              disabled={!password || !reason || reason.length < 10 || actionLoading}
+              disabled={!reason || reason.length < 10 || actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Force Close Group'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Group Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Group</DialogTitle>
+            <DialogDescription>
+              Permanently delete "{selectedGroup?.name}" and all related records. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="delete-group-password">Confirm Your Password</Label>
+              <Input
+                id="delete-group-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleDeleteGroup(selectedGroup?.id)}
+              disabled={actionLoading}
+            >
+              {actionLoading ? 'Processing...' : 'Delete Group'}
             </Button>
           </DialogFooter>
         </DialogContent>
