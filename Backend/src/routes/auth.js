@@ -186,7 +186,46 @@ router.get('/me', authenticate, async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    res.json({ success: true, user: rows[0] });
+    // Get user roles and permissions
+    const [roleRows] = await pool.execute(`
+      SELECT 
+        r.name as role_name,
+        r.permissions as role_permissions
+      FROM user_roles ur
+      JOIN roles r ON ur.role_id = r.id
+      WHERE ur.user_id = ?
+    `, [req.user.id]);
+    
+    // Extract roles and aggregate permissions
+    const roles = roleRows.map(row => row.role_name);
+    const permissions = [];
+    
+    // Aggregate permissions from all roles
+    roleRows.forEach(row => {
+      try {
+        const rolePermissions = typeof row.role_permissions === 'string'
+          ? JSON.parse(row.role_permissions)
+          : row.role_permissions;
+        if (Array.isArray(rolePermissions)) {
+          permissions.push(...rolePermissions);
+        }
+      } catch (e) {
+        console.error('Error parsing permissions JSON:', e);
+      }
+    });
+    
+    // Remove duplicate permissions
+    const uniquePermissions = [...new Set(permissions)];
+    
+    // Combine user data with roles and permissions
+    const userData = {
+      ...rows[0],
+      roles,
+      permissions: uniquePermissions,
+      isAdmin: roles.includes('admin')
+    };
+
+    res.json({ success: true, user: userData });
   } catch (err) {
     next(err);
   }

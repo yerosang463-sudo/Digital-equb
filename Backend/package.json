@@ -5,7 +5,10 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "db:migrate": "node src/database/cli.js migrate",
+    "db:status": "node src/database/cli.js status",
+    "db:reset": "node src/database/cli.js reset"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -17,6 +20,7 @@
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "mysql2": "^3.6.5",
+    "node-fetch": "^3.3.2",
     "nodemailer": "^8.0.5"
   },
   "devDependencies": {

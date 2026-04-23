@@ -4,6 +4,7 @@ const morgan = require('morgan');
 require('./config/env');
 
 const { testConnection } = require('./config/db');
+const { DatabaseMigrator } = require('./database/migrator');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth');
@@ -13,6 +14,7 @@ const paymentRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
 const contactRoutes = require('./routes/contact');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -38,6 +40,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/admin', adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` });
@@ -60,28 +63,59 @@ function killPort(port) {
   }
 }
 
+async function initializeDatabase() {
+  try {
+    console.log('Initializing database...');
+    
+    // Test database connection first
+    await testConnection();
+    console.log('Database connection established');
+    
+    // Run automated migrations
+    await DatabaseMigrator.runMigrations();
+    console.log('Database initialization completed');
+    
+    return true;
+  } catch (error) {
+    console.error('Database initialization failed:', error.message);
+    
+    // In development, provide helpful error messages
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('\n Troubleshooting tips:');
+      console.log('   1. Make sure MySQL is running');
+      console.log('   2. Check your .env database credentials');
+      console.log('   3. Ensure the database exists');
+      console.log('   4. Check if migration files exist in backend/src/database/\n');
+    }
+    
+    throw error;
+  }
+}
+
 function startServer(retried = false) {
   const server = app.listen(PORT, () => {
     console.log(`Digital Equb API server running on port ${PORT}`);
-    console.log(`Health check: http://localhost:${PORT}/api/health`);
+    console.log(` Health check: http://localhost:${PORT}/api/health`);
+    console.log(`Admin dashboard: http://localhost:${PORT}/admin`);
+    console.log(` Admin login: yerosang463@gmail.com / @yero27101620`);
   });
 
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE' && !retried) {
-      console.warn(`Port ${PORT} is in use. Killing existing process and retrying...`);
+      console.warn(`  Port ${PORT} is in use. Killing existing process and retrying...`);
       killPort(PORT);
       setTimeout(() => startServer(true), 1500);
     } else {
-      console.error('Server error:', err.message);
+      console.error(' Server error:', err.message);
       process.exit(1);
     }
   });
 
   // Graceful shutdown — releases the port cleanly on Ctrl+C or SIGTERM
   const shutdown = () => {
-    console.log('\nShutting down server gracefully...');
+    console.log('\n Shutting down server gracefully...');
     server.close(() => {
-      console.log('Server closed. Port released.');
+      console.log(' Server closed. Port released.');
       process.exit(0);
     });
   };
@@ -90,4 +124,15 @@ function startServer(retried = false) {
   process.on('SIGTERM', shutdown);
 }
 
-testConnection().then(() => startServer());
+// Initialize database and start server
+async function bootstrap() {
+  try {
+    await initializeDatabase();
+    startServer();
+  } catch (error) {
+    console.error('Failed to start application:', error.message);
+    process.exit(1);
+  }
+}
+
+bootstrap();

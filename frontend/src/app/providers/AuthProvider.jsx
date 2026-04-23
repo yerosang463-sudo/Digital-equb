@@ -63,10 +63,15 @@ export function AuthProvider({ children }) {
       body: { email, password },
     });
 
-    setStoredAuth(payload.token, payload.user);
+    // After successful login, get complete user profile including roles
+    const { user: completeUser } = await apiRequest("/api/auth/me", { 
+      token: payload.token 
+    });
+
+    setStoredAuth(payload.token, completeUser);
     setToken(payload.token);
-    setUser(payload.user);
-    return payload;
+    setUser(completeUser);
+    return { ...payload, user: completeUser };
   }
 
   async function signup(formData) {
@@ -98,10 +103,15 @@ export function AuthProvider({ children }) {
         body: { idToken: credential },
       });
 
-      setStoredAuth(payload.token, payload.user);
+      // After successful login, get complete user profile including roles
+      const { user: completeUser } = await apiRequest("/api/auth/me", { 
+        token: payload.token 
+      });
+
+      setStoredAuth(payload.token, completeUser);
       setToken(payload.token);
-      setUser(payload.user);
-      return payload;
+      setUser(completeUser);
+      return { ...payload, user: completeUser };
     } catch (error) {
       console.error("Google login failed", error);
       throw error;

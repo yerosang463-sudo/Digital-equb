@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bell, LogOut, Search } from "lucide-react";
+import { Bell, LogOut, Search, Shield } from "lucide-react";
 import { useNavigate, Link } from "react-router";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
@@ -71,6 +71,19 @@ export function TopBar() {
         </div>
 
         <div className="flex items-center gap-4">
+          {/* Admin Dashboard Link (only for admins) */}
+          {user?.isAdmin && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/admin")}
+              className="flex items-center gap-2"
+            >
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin</span>
+            </Button>
+          )}
+
           <button
             type="button"
             className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"

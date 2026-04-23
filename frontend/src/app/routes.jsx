@@ -9,6 +9,7 @@ import { BrowseGroupsPage } from "./pages/BrowseGroupsPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { PaymentsPage } from "./pages/PaymentsPage";
 import { ProfilePage } from "./pages/ProfilePage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 
 export const router = createBrowserRouter([
@@ -31,6 +32,10 @@ export const router = createBrowserRouter([
   { path: "payments", Component: PaymentsPage },
   { path: "profile", Component: ProfilePage }]
 
+},
+{
+  path: "/admin",
+  Component: AdminDashboardPage
 },
 {
   path: "*",

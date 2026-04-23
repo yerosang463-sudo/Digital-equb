@@ -3,6 +3,9 @@
 USE `digital-equb`;
 
 SET FOREIGN_KEY_CHECKS = 0;
+-- Delete existing data (only from tables that exist)
+DELETE FROM user_roles;
+DELETE FROM roles;
 DELETE FROM notifications;
 DELETE FROM payouts;
 DELETE FROM payments;
@@ -11,6 +14,7 @@ DELETE FROM group_invitations;
 DELETE FROM group_members;
 DELETE FROM equb_groups;
 DELETE FROM users;
+-- admin_actions will be empty after schema.sql creates it, so no need to delete
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ─── Users (password for all: password123) ───────────────────────────────────
@@ -18,7 +22,17 @@ INSERT INTO users (id, full_name, email, phone, password_hash, bio) VALUES
 (1, 'Abebe Bekele',     'abebe@example.com',   '+251911234567', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Equb enthusiast from Addis Ababa'),
 (2, 'Tigist Alemayehu', 'tigist@example.com',  '+251922345678', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Savings group coordinator'),
 (3, 'Dawit Haile',      'dawit@example.com',   '+251933456789', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Finance professional'),
-(4, 'Meron Tadesse',    'meron@example.com',   '+251944567890', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Community savings advocate');
+(4, 'Meron Tadesse',    'meron@example.com',   '+251944567890', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Community savings advocate'),
+(5, 'System Administrator', 'yerosang463@gmail.com', '+251900000000', '$2a$10$sextGiFGU0hqdIAXw.Sk2edifMxJG1uhL4EEP49CBnUSSjtEwixAK', 'System administrator with full platform access');
+
+-- ─── RBAC System ─────────────────────────────────────────────────────────────
+-- Admin role with all permissions
+INSERT INTO roles (id, name, description, permissions) VALUES
+(1, 'admin', 'Full platform administrator with complete access to all features and data', '["users.view", "users.edit", "users.delete", "users.ban", "groups.view", "groups.edit", "groups.delete", "groups.force_close", "payments.view", "payments.edit", "payments.refund", "payouts.view", "payouts.edit", "analytics.view", "roles.assign", "roles.revoke", "system.manage"]');
+
+-- Assign admin role to the system administrator (self-assigned)
+INSERT INTO user_roles (user_id, role_id, assigned_by) VALUES
+(5, 1, 5);
 
 -- ─── Group ───────────────────────────────────────────────────────────────────
 -- 4 members, 4 rounds completed, is_public so everyone can view details
