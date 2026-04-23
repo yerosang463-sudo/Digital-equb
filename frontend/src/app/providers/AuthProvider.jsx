@@ -58,20 +58,28 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
-    const payload = await apiRequest("/api/auth/login", {
-      method: "POST",
-      body: { email, password },
-    });
+    console.log('Attempting login with:', email);
+    try {
+      const payload = await apiRequest("/api/auth/login", {
+        method: "POST",
+        body: { email, password },
+      });
+      console.log('Login response:', payload);
 
-    // After successful login, get complete user profile including roles
-    const { user: completeUser } = await apiRequest("/api/auth/me", { 
-      token: payload.token 
-    });
+      // After successful login, get complete user profile including roles
+      const { user: completeUser } = await apiRequest("/api/auth/me", { 
+        token: payload.token 
+      });
+      console.log('Complete user data:', completeUser);
 
-    setStoredAuth(payload.token, completeUser);
-    setToken(payload.token);
-    setUser(completeUser);
-    return { ...payload, user: completeUser };
+      setStoredAuth(payload.token, completeUser);
+      setToken(payload.token);
+      setUser(completeUser);
+      return { ...payload, user: completeUser };
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
+    }
   }
 
   async function signup(formData) {

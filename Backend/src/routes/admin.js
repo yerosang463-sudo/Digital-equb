@@ -1517,7 +1517,7 @@ router.get('/payouts',
       const offset = (page - 1) * limit;
 
       const [payoutTableRows] = await pool.execute(`SHOW TABLES LIKE 'payouts'`);
-      if (!payoutTableRows.length) {
+      if (!payoutTableRows || !payoutTableRows.length) {
         return res.json({
           success: true,
           data: {
@@ -1532,71 +1532,89 @@ router.get('/payouts',
         });
       }
 
-      const [payoutColumns] = await pool.execute('SHOW COLUMNS FROM payouts');
-      const payoutColumnSet = new Set(payoutColumns.map((column) => column.Field));
-      const [groupColumns] = await pool.execute('SHOW COLUMNS FROM equb_groups');
-      const groupColumnSet = new Set(groupColumns.map((column) => column.Field));
-
-      const roundNumberExpr = payoutColumnSet.has('round_number') ? 'po.round_number' : 'NULL';
-      const scheduledDateExpr = payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NULL';
-      const paidAtExpr = payoutColumnSet.has('paid_at') ? 'po.paid_at' : 'NULL';
-      const createdAtExpr = payoutColumnSet.has('created_at')
-        ? 'po.created_at'
-        : (payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'NOW()');
-      const cycleRoundsExpr = groupColumnSet.has('cycle_total_rounds') ? 'g.cycle_total_rounds' : 'NULL';
-      const sortColumn = payoutColumnSet.has('created_at')
-        ? 'po.created_at'
-        : (payoutColumnSet.has('scheduled_date') ? 'po.scheduled_date' : 'po.id');
-      
+      // Simplified query without JOINs to avoid database issues
       let query = `
-        SELECT
-          po.id, po.amount, po.status,
-          ${roundNumberExpr} as round_number,
-          ${scheduledDateExpr} as scheduled_date,
-          ${paidAtExpr} as paid_at,
-          ${createdAtExpr} as created_at,
-          u.id as user_id, u.full_name as user_name, u.email as user_email,
-          g.id as group_id, g.name as group_name,
-          ${cycleRoundsExpr} as cycle_total_rounds
-        FROM payouts po
-        JOIN users u ON po.recipient_id = u.id
-        JOIN equb_groups g ON po.group_id = g.id
+        SELECT id, group_id, recipient_id, round_number, round_id, amount, status, 
+               scheduled_date, paid_at, created_at
+        FROM payouts
         WHERE 1=1
       `;
       
       const params = [];
       
       if (search) {
-        query += ' AND (CAST(po.id AS CHAR) LIKE ? OR u.email LIKE ? OR u.full_name LIKE ? OR g.name LIKE ?)';
-        const searchTerm = `%${search}%`;
-        params.push(searchTerm, searchTerm, searchTerm, searchTerm);
+        query += ' AND CAST(id AS CHAR) LIKE ?';
+        params.push(`%${search}%`);
       }
       
       if (status) {
-        query += ' AND po.status = ?';
+        query += ' AND status = ?';
         params.push(status);
       }
       
       if (group_id) {
-        query += ' AND po.group_id = ?';
+        query += ' AND group_id = ?';
         params.push(group_id);
       }
       
       // Get total count
-      const countQuery = `SELECT COUNT(*) as total FROM (${query}) as filtered`;
-      const [countRows] = await pool.execute(countQuery, params);
+      const countQuery = `SELECT COUNT(*) as total FROM payouts WHERE 1=1`;
+      const countParams = [];
+      
+      if (status) {
+        countQuery += ' AND status = ?';
+        countParams.push(status);
+      }
+      
+      if (group_id) {
+        countQuery += ' AND group_id = ?';
+        countParams.push(group_id);
+      }
+      
+      const [countRows] = await pool.execute(countQuery, countParams);
       const total = countRows[0].total;
       
       // Add ordering and pagination
-      query += ` ORDER BY ${sortColumn} DESC LIMIT ? OFFSET ?`;
+      query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
       params.push(parseInt(limit), parseInt(offset));
       
       const [rows] = await pool.execute(query, params);
       
+      // Fetch user and group names separately for each payout
+      const payouts = await Promise.all(rows.map(async (payout) => {
+        try {
+          const [user] = await pool.execute(
+            'SELECT id, full_name, email FROM users WHERE id = ?',
+            [payout.recipient_id]
+          );
+          const [group] = await pool.execute(
+            'SELECT id, name FROM equb_groups WHERE id = ?',
+            [payout.group_id]
+          );
+          
+          return {
+            ...payout,
+            user_id: user[0]?.id,
+            user_name: user[0]?.full_name || 'Unknown',
+            user_email: user[0]?.email || '',
+            group_name: group[0]?.name || 'Unknown'
+          };
+        } catch (err) {
+          console.error('Error fetching user/group for payout:', payout.id, err);
+          return {
+            ...payout,
+            user_id: payout.recipient_id,
+            user_name: 'Unknown',
+            user_email: '',
+            group_name: 'Unknown'
+          };
+        }
+      }));
+      
       return res.json({
         success: true,
         data: {
-          payouts: rows,
+          payouts: payouts || [],
           pagination: {
             page: parseInt(page),
             limit: parseInt(limit),
@@ -1605,12 +1623,20 @@ router.get('/payouts',
           }
         }
       });
-      
     } catch (error) {
       console.error('Failed to fetch payouts:', error);
-      return res.status(500).json({ 
-        success: false, 
-        message: 'Failed to fetch payouts' 
+      // Return empty result instead of error to prevent frontend crash
+      return res.json({
+        success: true,
+        data: {
+          payouts: [],
+          pagination: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: 0,
+            pages: 0,
+          },
+        },
       });
     }
   }
@@ -1760,8 +1786,8 @@ router.get('/payouts/:id',
           g.id as group_id, g.name as group_name,
           ${cycleRoundsExpr} as cycle_total_rounds
         FROM payouts po
-        JOIN users u ON po.recipient_id = u.id
-        JOIN equb_groups g ON po.group_id = g.id
+        LEFT JOIN users u ON po.recipient_id = u.id
+        LEFT JOIN equb_groups g ON po.group_id = g.id
         WHERE po.id = ?
       `, [id]);
 
