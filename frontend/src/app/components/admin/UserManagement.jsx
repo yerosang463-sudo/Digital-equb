@@ -26,6 +26,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { apiRequest } from '../../lib/api';
@@ -389,13 +390,41 @@ const UserManagement = () => {
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
                   <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                    <div className="flex items-center gap-2 justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setShowEditDialog(true);
+                        }}
+                        className="hover:bg-blue-50 hover:border-blue-200"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setPassword('');
+                          setShowDeleteDialog(true);
+                        }}
+                        className="hover:bg-red-50 hover:border-red-200 text-red-600"
+                      >
+                        <UserX className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="hover:bg-gray-100 p-2">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => {
                           setSelectedUser(user);
                           setShowEditDialog(true);
@@ -404,53 +433,70 @@ const UserManagement = () => {
                           Edit User
                         </DropdownMenuItem>
                         
+                        <DropdownMenuSeparator />
+                        
                         {user.is_active === 1 ? (
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedUser(user);
-                            setShowBanDialog(true);
-                          }}>
+                          <DropdownMenuItem 
+                            className="text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowBanDialog(true);
+                            }}>
                             <Ban className="h-4 w-4 mr-2" />
                             Ban User
                           </DropdownMenuItem>
                         ) : (
-                          <DropdownMenuItem onClick={() => handleUnbanUser(user.id)}>
+                          <DropdownMenuItem 
+                            className="text-green-600 hover:bg-green-50 focus:bg-green-50"
+                            onClick={() => handleUnbanUser(user.id)}>
                             <UserCheck className="h-4 w-4 mr-2" />
                             Unban User
                           </DropdownMenuItem>
                         )}
                         
+                        <DropdownMenuSeparator />
+                        
                         {!user.roles?.includes('admin') && (
-                          <DropdownMenuItem onClick={() => {
-                            setSelectedUser(user);
-                            setPassword('');
-                            setShowAssignAdminDialog(true);
-                          }}>
+                          <DropdownMenuItem 
+                            className="text-purple-600 hover:bg-purple-50 focus:bg-purple-50"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setPassword('');
+                              setShowAssignAdminDialog(true);
+                            }}>
                             <Shield className="h-4 w-4 mr-2" />
                             Assign Admin Role
                           </DropdownMenuItem>
                         )}
 
                         {user.roles?.includes('admin') && Number(user.id) !== Number(currentUser?.id) && (
-                          <DropdownMenuItem className="text-orange-600" onClick={() => {
-                            setSelectedUser(user);
-                            setPassword('');
-                            setShowRevokeAdminDialog(true);
-                          }}>
+                          <DropdownMenuItem 
+                            className="text-orange-600 hover:bg-orange-50 focus:bg-orange-50"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setPassword('');
+                              setShowRevokeAdminDialog(true);
+                            }}>
                             <ShieldOff className="h-4 w-4 mr-2" />
                             Revoke Admin Role
                           </DropdownMenuItem>
                         )}
                         
-                        <DropdownMenuItem className="text-red-600" onClick={() => {
-                          setSelectedUser(user);
-                          setPassword('');
-                          setShowDeleteDialog(true);
-                        }}>
+                        <DropdownMenuSeparator />
+                        
+                        <DropdownMenuItem 
+                          className="text-red-600 hover:bg-red-50 focus:bg-red-50"
+                          onClick={() => {
+                            setSelectedUser(user);
+                            setPassword('');
+                            setShowDeleteDialog(true);
+                          }}>
                           <UserX className="h-4 w-4 mr-2" />
                           Delete User
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

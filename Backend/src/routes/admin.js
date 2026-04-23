@@ -1065,6 +1065,237 @@ router.delete('/groups/:id',
   }
 );
 
+// ==================== Group Member Management Endpoints ====================
+
+/**
+ * DELETE /api/admin/groups/:groupId/members/:memberId
+ * Remove a member from a group (requires password confirmation)
+ * Requires: groups.members.manage permission
+ */
+router.delete('/groups/:groupId/members/:memberId',
+  requirePermission('groups.members.manage'),
+  auditLog('member_remove', 'group_member', 
+    (req) => `${req.params.groupId}:${req.params.memberId}`,
+    (req) => ({ 
+      groupId: req.params.groupId,
+      memberId: req.params.memberId,
+      adminId: req.user.id
+    })
+  ),
+  async (req, res) => {
+    try {
+      const { groupId, memberId } = req.params;
+      if (!(await verifyAdminAction(req, res))) return;
+
+      // Check if group exists
+      const [groupRows] = await pool.execute(
+        'SELECT id, name, current_members, max_members, status FROM equb_groups WHERE id = ?',
+        [groupId]
+      );
+
+      if (groupRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Group not found'
+        });
+      }
+
+      // Check if member exists in group
+      const [memberRows] = await pool.execute(`
+        SELECT gm.user_id, u.full_name, u.email 
+        FROM group_members gm 
+        JOIN users u ON gm.user_id = u.id 
+        WHERE gm.group_id = ? AND gm.user_id = ?
+      `, [groupId, memberId]);
+
+      if (memberRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Member not found in group'
+        });
+      }
+
+      const member = memberRows[0];
+      const group = groupRows[0];
+
+      // Remove member from group
+      await pool.execute(
+        'DELETE FROM group_members WHERE group_id = ? AND user_id = ?',
+        [groupId, memberId]
+      );
+
+      // Update group member count and status
+      await pool.execute(`
+        UPDATE equb_groups 
+        SET current_members = (SELECT COUNT(*) FROM group_members WHERE group_id = ?),
+            status = CASE
+              WHEN status = 'active' AND (SELECT COUNT(*) FROM group_members WHERE group_id = ?) < max_members THEN 'open'
+              ELSE status
+            END,
+            updated_at = NOW()
+        WHERE id = ?
+      `, [groupId, groupId, groupId]);
+
+      // Create notifications
+      await safeCreateNotification(
+        memberId,
+        'Removed from Group',
+        `You have been removed from the group "${group.name}" by an administrator.`
+      );
+
+      await safeCreateNotification(
+        group.created_by,
+        'Member Removed from Your Group',
+        `${member.full_name} has been removed from your group "${group.name}" by an administrator.`
+      );
+
+      return res.json({
+        success: true,
+        message: 'Member removed successfully'
+      });
+
+    } catch (error) {
+      console.error('Failed to remove member:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to remove member'
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/admin/groups/:groupId/members
+ * Add a member to a group (requires password confirmation)
+ * Requires: groups.members.manage permission
+ */
+router.post('/groups/:groupId/members',
+  requirePermission('groups.members.manage'),
+  auditLog('member_add', 'group_member', 
+    (req) => `${req.params.groupId}:${req.body.user_id}`,
+    (req) => ({ 
+      groupId: req.params.groupId,
+      memberId: req.body.user_id,
+      adminId: req.user.id
+    })
+  ),
+  async (req, res) => {
+    try {
+      const { groupId } = req.params;
+      const { user_id } = req.body;
+      
+      if (!user_id) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+
+      if (!(await verifyAdminAction(req, res))) return;
+
+      // Check if group exists and has space
+      const [groupRows] = await pool.execute(
+        'SELECT id, name, current_members, max_members, status FROM equb_groups WHERE id = ?',
+        [groupId]
+      );
+
+      if (groupRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'Group not found'
+        });
+      }
+
+      const group = groupRows[0];
+
+      if (group.current_members >= group.max_members) {
+        return res.status(400).json({
+          success: false,
+          message: 'Group is already full'
+        });
+      }
+
+      // Check if user exists and is active
+      const [userRows] = await pool.execute(
+        'SELECT id, full_name, email, is_active FROM users WHERE id = ?',
+        [user_id]
+      );
+
+      if (userRows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      const user = userRows[0];
+
+      if (!user.is_active) {
+        return res.status(400).json({
+          success: false,
+          message: 'User account is not active'
+        });
+      }
+
+      // Check if user is already a member
+      const [existingMemberRows] = await pool.execute(
+        'SELECT id FROM group_members WHERE group_id = ? AND user_id = ?',
+        [groupId, user_id]
+      );
+
+      if (existingMemberRows.length > 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'User is already a member of this group'
+        });
+      }
+
+      // Add member to group
+      await pool.execute(`
+        INSERT INTO group_members (group_id, user_id, joined_at)
+        VALUES (?, ?, NOW())
+      `, [groupId, user_id]);
+
+      // Update group member count and status
+      await pool.execute(`
+        UPDATE equb_groups 
+        SET current_members = (SELECT COUNT(*) FROM group_members WHERE group_id = ?),
+            status = CASE
+              WHEN status = 'open' AND (SELECT COUNT(*) FROM group_members WHERE group_id = ?) >= max_members THEN 'active'
+              ELSE status
+            END,
+            updated_at = NOW()
+        WHERE id = ?
+      `, [groupId, groupId, groupId]);
+
+      // Create notifications
+      await safeCreateNotification(
+        user_id,
+        'Added to Group',
+        `You have been added to the group "${group.name}" by an administrator.`
+      );
+
+      await safeCreateNotification(
+        group.created_by,
+        'Member Added to Your Group',
+        `${user.full_name} has been added to your group "${group.name}" by an administrator.`
+      );
+
+      return res.json({
+        success: true,
+        message: 'Member added successfully'
+      });
+
+    } catch (error) {
+      console.error('Failed to add member:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to add member'
+      });
+    }
+  }
+);
+
 // ==================== Payment Management Endpoints ====================
 
 /**

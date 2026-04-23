@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { RootLayout } from "./layouts/RootLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { HomePage } from "./pages/HomePage";
@@ -11,6 +11,8 @@ import { PaymentsPage } from "./pages/PaymentsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import AdminRouteProtection from "./components/AdminRouteProtection";
+import UserRouteProtection from "./components/UserRouteProtection";
 
 export const router = createBrowserRouter([
 {
@@ -24,18 +26,26 @@ export const router = createBrowserRouter([
 },
 {
   path: "/dashboard",
-  Component: DashboardLayout,
+  element: <UserRouteProtection />,
   children: [
-  { index: true, Component: DashboardPage },
-  { path: "groups", Component: BrowseGroupsPage },
-  { path: "groups/:groupId", Component: GroupDetailPage },
-  { path: "payments", Component: PaymentsPage },
-  { path: "profile", Component: ProfilePage }]
-
+    {
+      element: <DashboardLayout />,
+      children: [
+        { index: true, element: <DashboardPage /> },
+        { path: "groups", element: <BrowseGroupsPage /> },
+        { path: "groups/:groupId", element: <GroupDetailPage /> },
+        { path: "payments", element: <PaymentsPage /> },
+        { path: "profile", element: <ProfilePage /> }
+      ]
+    }
+  ]
 },
 {
   path: "/admin",
-  Component: AdminDashboardPage
+  element: <AdminRouteProtection />,
+  children: [
+    { index: true, element: <AdminDashboardPage /> }
+  ]
 },
 {
   path: "*",

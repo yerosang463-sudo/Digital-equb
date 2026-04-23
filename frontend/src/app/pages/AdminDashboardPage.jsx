@@ -43,12 +43,6 @@ const AdminDashboardPage = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Check if user is admin
-    if (!user || !user.isAdmin) {
-      navigate('/login');
-      return;
-    }
-
     fetchDashboardStats();
   }, [user, navigate]);
 
