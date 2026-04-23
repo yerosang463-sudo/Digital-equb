@@ -245,8 +245,9 @@ async function getEligibleWinnerIds(conn, groupId) {
     let rows;
     if (columnExists) {
       [rows] = await conn.query(
-        `SELECT gm.user_id, gm.full_name, gm.has_paid_current_round
+        `SELECT gm.user_id, u.full_name, gm.has_paid_current_round
          FROM group_members gm
+         JOIN users u ON u.id = gm.user_id
          WHERE gm.group_id = ?
          AND gm.has_paid_current_round = 1
          ORDER BY gm.payout_order ASC`,
