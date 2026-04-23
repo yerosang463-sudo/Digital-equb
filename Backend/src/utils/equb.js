@@ -98,17 +98,25 @@ async function getGroupMembers(conn, groupId) {
 }
 
 async function getCurrentRound(conn, groupId) {
-  const [rows] = await conn.query(
-    `SELECT r.*, u.full_name AS winner_name
-     FROM equb_rounds r
-     LEFT JOIN users u ON u.id = r.winner_id
-     WHERE r.group_id = ? AND r.status IN ('collecting', 'winner_selected')
-     ORDER BY r.round_number DESC
-     LIMIT 1`,
-    [groupId]
-  );
+  try {
+    console.log('Getting current round for group:', groupId);
+    
+    const [rows] = await conn.query(
+      `SELECT r.*, u.full_name AS winner_name
+       FROM equb_rounds r
+       LEFT JOIN users u ON u.id = r.winner_id
+       WHERE r.group_id = ? AND r.status IN ('collecting', 'winner_selected')
+       ORDER BY r.round_number DESC
+       LIMIT 1`,
+      [groupId]
+    );
 
-  return rows[0] || null;
+    console.log('Current round query result:', rows);
+    return rows[0] || null;
+  } catch (error) {
+    console.error('Error in getCurrentRound:', error);
+    throw error;
+  }
 }
 
 async function getRoundById(conn, roundId) {
@@ -143,29 +151,37 @@ async function createRound(conn, group, roundNumber) {
 }
 
 async function ensureCurrentRound(conn, groupId) {
-  let group = await getGroupById(conn, groupId);
-  if (!group || (group.status !== "active" && group.status !== "open")) {
-    return null;
+  try {
+    console.log('Ensuring current round for group:', groupId);
+    
+    let group = await getGroupById(conn, groupId);
+    if (!group) {
+      console.error('Group not found:', groupId);
+      return null;
+    }
+    
+    if (group.status !== "active" && group.status !== "open") {
+      console.error('Group is not active or open:', group.status);
+      return null;
+    }
+
+    console.log('Group status:', group.status);
+    console.log('Current round number:', group.current_round_number);
+
+    const round = await getCurrentRound(conn, groupId);
+    if (!round) {
+      console.log('No active round found, creating new round');
+      const newRound = await createRound(conn, group, (group.current_round_number || 0) + 1);
+      return newRound;
+    }
+
+    console.log('Current round found:', round);
+    return round;
+  } catch (error) {
+    console.error('Error in ensureCurrentRound:', error);
+    console.error('Stack trace:', error.stack);
+    throw error;
   }
-
-  group = await ensureCycleTotalRounds(conn, groupId);
-
-  const existingRound = await getCurrentRound(conn, groupId);
-  if (existingRound) {
-    await ensureRoundPaymentsForMembers(conn, group, {
-      roundId: existingRound.id,
-      roundNumber: existingRound.round_number,
-      dueDate: existingRound.due_date,
-    });
-    return existingRound;
-  }
-
-  const [closedRounds] = await conn.query(
-    "SELECT COUNT(*) AS total FROM equb_rounds WHERE group_id = ?",
-    [groupId]
-  );
-
-  return createRound(conn, group, closedRounds[0].total + 1);
 }
 
 async function ensureRoundPaymentsForMembers(
@@ -211,20 +227,60 @@ async function ensureRoundPaymentsForMembers(
 }
 
 async function getEligibleWinnerIds(conn, groupId) {
-  const [rows] = await conn.query(
-    `SELECT gm.user_id
-     FROM group_members gm
-     WHERE gm.group_id = ?
-       AND gm.user_id NOT IN (
-         SELECT p.recipient_id
-         FROM payouts p
-         WHERE p.group_id = ? AND p.status IN ('scheduled', 'paid')
-       )
-     ORDER BY gm.payout_order ASC`,
-    [groupId, groupId]
-  );
+  try {
+    console.log('Getting eligible winner IDs for group:', groupId);
+    
+    // Check if column exists first
+    const [columnCheck] = await conn.query(
+      `SELECT COUNT(*) as count
+       FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'group_members'
+       AND COLUMN_NAME = 'has_paid_current_round'`
+    );
 
-  return rows.map((row) => row.user_id);
+    const columnExists = columnCheck[0].count > 0;
+    console.log('has_paid_current_round column exists:', columnExists);
+
+    let rows;
+    if (columnExists) {
+      [rows] = await conn.query(
+        `SELECT gm.user_id, gm.full_name, gm.has_paid_current_round
+         FROM group_members gm
+         WHERE gm.group_id = ?
+         AND gm.has_paid_current_round = 1
+         ORDER BY gm.payout_order ASC`,
+        [groupId]
+      );
+    } else {
+      // Fallback: use payment status instead
+      console.log('Using payment status fallback for eligible winners');
+      [rows] = await conn.query(
+        `SELECT DISTINCT gm.user_id, u.full_name, 1 as has_paid_current_round
+         FROM group_members gm
+         JOIN users u ON u.id = gm.user_id
+         JOIN payments p ON p.payer_id = gm.user_id AND p.group_id = gm.group_id
+         WHERE gm.group_id = ?
+         AND p.status = 'completed'
+         AND gm.has_received_payout = 0
+         ORDER BY gm.payout_order ASC`,
+        [groupId]
+      );
+    }
+
+    console.log('Found eligible members:', rows.length);
+    console.log('Eligible members:', rows.map(r => ({ id: r.user_id, name: r.full_name, paid: r.has_paid_current_round })));
+
+    if (!rows || rows.length === 0) {
+      console.log('No eligible members found');
+      return [];
+    }
+
+    return rows.map((row) => row.user_id);
+  } catch (error) {
+    console.error('Error in getEligibleWinnerIds:', error);
+    throw error;
+  }
 }
 
 async function selectWinnerForRound(
@@ -251,25 +307,60 @@ async function selectWinnerForRound(
     throw error;
   }
 
-  const [paymentSummary] = await conn.query(
-    `SELECT
-       COUNT(*) AS total_payments,
-       SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS completed_payments
-     FROM payments
-     WHERE group_id = ? AND round_id = ?`,
-    [groupId, round.id]
+  // Check if all members have paid for current round
+  // Check if column exists first
+  const [columnCheck] = await conn.query(
+    `SELECT COUNT(*) as count
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+     AND TABLE_NAME = 'group_members'
+     AND COLUMN_NAME = 'has_paid_current_round'`
   );
 
-  if (
-    Number(paymentSummary[0].total_payments || 0) === 0 ||
-    Number(paymentSummary[0].completed_payments || 0) !== Number(paymentSummary[0].total_payments || 0)
-  ) {
+  const columnExists = columnCheck[0].count > 0;
+  console.log('has_paid_current_round column exists:', columnExists);
+
+  let memberPaymentStatus;
+  if (columnExists) {
+    [memberPaymentStatus] = await conn.query(
+      `SELECT
+         COUNT(*) AS total_members,
+         SUM(CASE WHEN gm.has_paid_current_round = 1 THEN 1 ELSE 0 END) AS paid_members
+       FROM group_members gm
+       WHERE gm.group_id = ?`,
+      [groupId]
+    );
+  } else {
+    // Fallback: use payment status instead
+    console.log('Using payment status fallback for member payment check');
+    [memberPaymentStatus] = await conn.query(
+      `SELECT
+         COUNT(DISTINCT gm.user_id) AS total_members,
+         COUNT(DISTINCT CASE WHEN p.status = 'completed' THEN gm.user_id END) AS paid_members
+       FROM group_members gm
+       LEFT JOIN payments p ON p.payer_id = gm.user_id AND p.group_id = gm.group_id
+       WHERE gm.group_id = ?`,
+      [groupId]
+    );
+  }
+
+  const totalMembers = Number(memberPaymentStatus[0].total_members || 0);
+  const paidMembers = Number(memberPaymentStatus[0].paid_members || 0);
+
+  console.log('Payment status check:');
+  console.log('- Total members:', totalMembers);
+  console.log('- Paid members:', paidMembers);
+  console.log('- All members paid check:', totalMembers > 0 && paidMembers === totalMembers);
+
+  if (totalMembers === 0 || paidMembers < totalMembers) {
     const error = new Error("All members must complete payment before selecting a winner");
     error.status = 400;
     throw error;
   }
 
   const eligibleWinnerIds = await getEligibleWinnerIds(conn, groupId);
+  console.log('Eligible winner IDs:', eligibleWinnerIds);
+  
   if (!eligibleWinnerIds.length) {
     const error = new Error("All group members have already received a payout");
     error.status = 400;
@@ -280,6 +371,9 @@ async function selectWinnerForRound(
   let method = selectionMethod;
 
   if (winnerId) {
+    console.log('Manual winner selection - recipient ID:', winnerId);
+    console.log('Is recipient eligible:', eligibleWinnerIds.includes(Number(winnerId)));
+    
     if (!eligibleWinnerIds.includes(Number(winnerId))) {
       const error = new Error("Selected user is not eligible for this round");
       error.status = 400;
@@ -290,6 +384,7 @@ async function selectWinnerForRound(
     const randomIndex = Math.floor(Math.random() * eligibleWinnerIds.length);
     winnerId = eligibleWinnerIds[randomIndex];
     method = selectionMethod === "auto" ? "auto" : "random";
+    console.log('Random winner selected - ID:', winnerId, 'Index:', randomIndex);
   }
 
   const amount = Number(group.contribution_amount) * Number(group.member_count || group.current_members || 0);

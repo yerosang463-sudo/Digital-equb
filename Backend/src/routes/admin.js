@@ -1797,8 +1797,10 @@ router.get('/analytics',
   requirePermission('analytics.view'),
   async (req, res) => {
     try {
+      console.log('Fetching analytics data...');
+      
       // Totals used by the admin dashboard overview cards.
-      const [[userTotals]] = await pool.execute(`
+      const [userTotals] = await pool.execute(`
         SELECT
           COUNT(*) as total_users,
           SUM(is_active = 1) as active_users,
@@ -1806,12 +1808,16 @@ router.get('/analytics',
         FROM users
       `);
 
-      const [[adminTotals]] = await pool.execute(`
+      console.log('User totals:', userTotals);
+
+      const [adminTotals] = await pool.execute(`
         SELECT COUNT(DISTINCT ur.user_id) as admin_users
         FROM user_roles ur
         JOIN roles r ON ur.role_id = r.id
         WHERE r.name = 'admin'
       `);
+
+      console.log('Admin totals:', adminTotals);
 
       const userStats = {
         ...userTotals,
@@ -1819,7 +1825,7 @@ router.get('/analytics',
       };
       
       // Get group statistics
-      const [[groupStats]] = await pool.execute(`
+      const [groupStats] = await pool.execute(`
         SELECT
           COUNT(*) as total_groups,
           SUM(status = 'open') as open_groups,
@@ -1832,9 +1838,11 @@ router.get('/analytics',
           SUM(contribution_amount * current_members) as total_contribution_value
         FROM equb_groups
       `);
+
+      console.log('Group stats:', groupStats);
       
       // Get payment statistics
-      const [[paymentStats]] = await pool.execute(`
+      const [paymentStats] = await pool.execute(`
         SELECT
           COUNT(*) as total_payments,
           SUM(status = 'completed') as completed_payments,
@@ -1844,6 +1852,8 @@ router.get('/analytics',
           SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as total_processed_amount
         FROM payments
       `);
+
+      console.log('Payment stats:', paymentStats);
       
       // Get recent activity
       const [recentActivity] = await pool.execute(`

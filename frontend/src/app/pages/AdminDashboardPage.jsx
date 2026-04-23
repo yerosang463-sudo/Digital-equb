@@ -51,11 +51,16 @@ const AdminDashboardPage = () => {
       setLoading(true);
       setError('');
 
+      console.log('Fetching admin dashboard stats...');
+      
       // Fetch analytics data
       const response = await apiRequest('/api/admin/analytics');
       
+      console.log('Analytics response:', response);
+      
       if (response.success) {
         const data = response.data;
+        console.log('Analytics data:', data);
         
         // Extract stats from analytics
         setStats({
@@ -67,10 +72,14 @@ const AdminDashboardPage = () => {
           pendingPayments: data.payment_stats?.pending_payments || 0,
           totalRevenue: data.group_stats?.total_contribution_value || 0
         });
+      } else {
+        console.error('Analytics request failed:', response.message);
+        setError(response.message || 'Failed to load dashboard statistics');
       }
     } catch (err) {
       console.error('Failed to fetch dashboard stats:', err);
-      setError('Failed to load dashboard statistics');
+      console.error('Error details:', err.message, err.stack);
+      setError(`Failed to load dashboard statistics: ${err.message}`);
     } finally {
       setLoading(false);
     }

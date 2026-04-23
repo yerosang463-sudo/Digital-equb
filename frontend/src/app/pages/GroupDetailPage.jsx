@@ -102,7 +102,20 @@ export function GroupDetailPage() {
       await callback();
       await refreshGroup();
     } catch (error) {
-      window.alert(error.message);
+      // Better error handling with user-friendly messages
+      const errorMessage = error.message || 'An unexpected error occurred';
+      console.error(`Action ${actionKey} failed:`, error);
+      
+      // Use toast or alert based on error type
+      if (error.status === 403) {
+        window.alert('Permission denied: You do not have access to perform this action.');
+      } else if (error.status === 404) {
+        window.alert('Not found: The requested resource was not found.');
+      } else if (error.status >= 500) {
+        window.alert('Server error: Please try again later.');
+      } else {
+        window.alert(errorMessage);
+      }
     } finally {
       setBusyAction("");
     }
@@ -128,15 +141,37 @@ export function GroupDetailPage() {
   const latestWinnerName = group.latest_winner_name || group.current_winner_name;
   const latestWinnerRound = group.latest_winner_round_number;
 
+  // Debug logging for member payment status
+  console.log('Member payment status debug:');
+  console.log('- Total members:', members.length);
+  console.log('- Paid members:', paidMembers);
+  console.log('- All members paid:', allMembersPaid);
+  console.log('- Members with payment status:', members.map(m => ({ id: m.user_id, name: m.full_name, paid: m.has_paid_current_round })));
+
   async function handleJoinGroup() {
     await runAction("join", async () => {
-      await apiRequest(`/api/groups/${groupId}/join`, { method: "POST" });
+      const response = await apiRequest(`/api/groups/${groupId}/join`, { method: "POST" });
+      if (response.success) {
+        // Success feedback will be handled by refreshGroup()
+        console.log('Successfully joined group');
+      }
     });
   }
 
   async function handleSelectWinner() {
     await runAction("selectWinner", async () => {
-      await apiRequest(`/api/groups/${groupId}/winner/select`, { method: "POST", body: {} });
+      console.log('Starting winner selection...');
+      console.log('Group ID:', groupId);
+      console.log('All members paid:', allMembersPaid);
+      
+      const response = await apiRequest(`/api/groups/${groupId}/winner/select`, { method: "POST", body: {} });
+      console.log('Winner selection response:', response);
+      
+      if (response.success) {
+        console.log('Winner selected successfully');
+      } else {
+        console.error('Winner selection failed:', response.message);
+      }
     });
   }
 
@@ -175,8 +210,8 @@ export function GroupDetailPage() {
     });
   }
 
-  async function handleRemoveMember(userId) {
-    if (!window.confirm("Remove this member from the group?")) {
+  async function handleRemoveMember(userId, memberName) {
+    if (!window.confirm(`Are you sure you want to remove ${memberName || 'this member'} from the group? This action cannot be undone.`)) {
       return;
     }
 
@@ -531,7 +566,9 @@ export function GroupDetailPage() {
                 <Button
                   className="w-full justify-start bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 text-sm h-10"
                   onClick={handleSelectWinner}
-                  disabled={busyAction === "selectWinner" || !allMembersPaid || !details.current_round}
+                  disabled={busyAction === "selectWinner" || !allMembersPaid}
+                  aria-label={busyAction === "selectWinner" ? "Selecting winner..." : allMembersPaid ? "Select random winner for current round" : "Wait for all members to pay"}
+                  title={allMembersPaid ? "Click to select a random winner from paid members" : "Winner selection available when all members have paid"}
                 >
                   <Award className="w-4 h-4 mr-2" />
                   {busyAction === "selectWinner" ? "Selecting..." : "Select Random Winner"}

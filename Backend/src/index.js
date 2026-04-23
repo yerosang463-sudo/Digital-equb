@@ -5,6 +5,7 @@ require('./config/env');
 
 const { testConnection } = require('./config/db');
 const { DatabaseMigrator } = require('./database/migrator');
+const { autoMigrate } = require('./migrations/auto-migrate');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth');
@@ -74,6 +75,9 @@ async function initializeDatabase() {
     // Run automated migrations
     await DatabaseMigrator.runMigrations();
     console.log('Database initialization completed');
+    
+    // Run auto-migration for has_paid_current_round column
+    await autoMigrate();
     
     return true;
   } catch (error) {

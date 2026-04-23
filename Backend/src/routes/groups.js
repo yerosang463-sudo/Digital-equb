@@ -685,6 +685,11 @@ router.post(
       return res.status(403).json({ success: false, message: 'Only group admins can select winners' });
     }
 
+    console.log('Winner selection request:');
+    console.log('- Group ID:', req.params.id);
+    console.log('- User ID:', req.user.id);
+    console.log('- Recipient ID:', req.body.recipient_id);
+
     const conn = await pool.getConnection();
     try {
       await conn.beginTransaction();
@@ -695,10 +700,15 @@ router.post(
         recipientId: req.body.recipient_id ? Number(req.body.recipient_id) : null,
       });
 
+      console.log('Round selected:', round);
+      console.log('Eligible winner IDs will be checked...');
+
       let closeResult = await closeCurrentRound(conn, {
         groupId: req.params.id,
         adminUserId: req.user.id,
       });
+
+      console.log('Round closed result:', closeResult);
 
 
 

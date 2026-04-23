@@ -220,6 +220,22 @@ router.post(
         [req.body.phone, transactionRef, req.body.notes || 'Simulated Telebirr payment', req.params.id]
       );
 
+      // Update member's paid status for current round (with error handling for missing column)
+      try {
+        await conn.query(
+          `UPDATE group_members
+           SET has_paid_current_round = 1
+           WHERE group_id = ? AND user_id = ?`,
+          [payment.group_id, payment.payer_id]
+        );
+      } catch (updateError) {
+        if (updateError.message.includes('Unknown column')) {
+          console.warn('has_paid_current_round column does not exist - skipping update');
+        } else {
+          throw updateError;
+        }
+      }
+
       const [admins] = await conn.query(
         `SELECT user_id
          FROM group_members
