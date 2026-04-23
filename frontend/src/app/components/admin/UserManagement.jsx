@@ -350,6 +350,7 @@ const UserManagement = () => {
               <TableHead>Phone</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Groups</TableHead>
               <TableHead>Joined</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -357,7 +358,7 @@ const UserManagement = () => {
           <TableBody>
             {filteredUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                   No users found
                 </TableCell>
               </TableRow>
@@ -386,6 +387,23 @@ const UserManagement = () => {
                   <TableCell>{user.phone || 'N/A'}</TableCell>
                   <TableCell>{getStatusBadge(user.is_active)}</TableCell>
                   <TableCell>{getRoleBadge(user.roles)}</TableCell>
+                  <TableCell>
+                    {user.groups && user.groups.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {user.groups.map((group) => (
+                          <Badge 
+                            key={group.id} 
+                            variant="outline" 
+                            className="text-xs bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                          >
+                            {group.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-gray-400 text-sm">No groups</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     {new Date(user.created_at).toLocaleDateString()}
                   </TableCell>
