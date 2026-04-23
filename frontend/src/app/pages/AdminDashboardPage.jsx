@@ -121,9 +121,23 @@ const AdminDashboardPage = () => {
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-green-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {user?.full_name || 'Admin'}
-                </span>
+                <div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">
+                      {user?.full_name || 'Admin'}
+                    </span>
+                    {user?.email && (
+                      <span className="text-xs text-gray-500 ml-2">
+                        {user.email}
+                      </span>
+                    )}
+                  </div>
+                  {user?.phone && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      {user.phone}
+                    </span>
+                  )}
+                </div>
               </div>
               <Button 
                 variant="outline" 
