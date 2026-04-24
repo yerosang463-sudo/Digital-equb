@@ -230,6 +230,19 @@ async function getEligibleWinnerIds(conn, groupId) {
   try {
     console.log('Getting eligible winner IDs for group:', groupId);
     
+    // Get all previous winners from this group (excluding current round)
+    const [previousWinners] = await conn.query(
+      `SELECT DISTINCT r.winner_id
+       FROM equb_rounds r
+       WHERE r.group_id = ?
+       AND r.winner_id IS NOT NULL
+       AND r.status IN ('winner_selected', 'closed')`,
+      [groupId]
+    );
+    
+    const previousWinnerIds = previousWinners.map(r => r.winner_id);
+    console.log('Previous winners in this group:', previousWinnerIds);
+    
     // Check if column exists first
     const [columnCheck] = await conn.query(
       `SELECT COUNT(*) as count
@@ -272,12 +285,11 @@ async function getEligibleWinnerIds(conn, groupId) {
     console.log('Found eligible members:', rows.length);
     console.log('Eligible members:', rows.map(r => ({ id: r.user_id, name: r.full_name, paid: r.has_paid_current_round })));
 
-    if (!rows || rows.length === 0) {
-      console.log('No eligible members found');
-      return [];
-    }
-
-    return rows.map((row) => row.user_id);
+    // Filter out members who have already won
+    const eligibleRows = rows.filter(r => !previousWinnerIds.includes(r.user_id));
+    const eligibleIds = eligibleRows.map(r => r.user_id);
+    console.log('Eligible winner IDs (excluding previous winners):', eligibleIds);
+    return eligibleIds;
   } catch (error) {
     console.error('Error in getEligibleWinnerIds:', error);
     throw error;

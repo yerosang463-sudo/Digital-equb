@@ -254,22 +254,22 @@ export function GroupDetailPage() {
 
       {/* ── Cycle Completed Celebration Modal ───────────────────────── */}
       <Dialog open={group.status === "completed" && isAdmin} onOpenChange={() => {}}>
-        <DialogContent className="sm:max-w-xl border-4 border-yellow-400 shadow-2xl bg-gradient-to-br from-yellow-50 via-white to-orange-50 overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400"></div>
-          
-          <DialogHeader className="pt-8 flex flex-col items-center">
-            <div className="text-8xl mb-6 animate-bounce">🏆</div>
-            <DialogTitle className="text-4xl font-black text-gray-900 text-center leading-tight">
-              Congratulations!<br />Cycle Successfully Completed
+        <DialogContent className="sm:max-w-md border-2 border-yellow-400 shadow-xl bg-gradient-to-br from-yellow-50 via-white to-orange-50 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-orange-500 to-yellow-400"></div>
+
+          <DialogHeader className="pt-6 flex flex-col items-center">
+            <div className="text-5xl mb-3">🏆</div>
+            <DialogTitle className="text-2xl font-bold text-gray-900 text-center leading-tight">
+              Cycle Completed!
             </DialogTitle>
-            <DialogDescription className="text-center text-xl text-gray-600 mt-4 px-4 leading-relaxed">
-              Fantastic job. You have managed this group perfectly and every single member has received their payout.
+            <DialogDescription className="text-center text-sm text-gray-600 mt-2 px-4 leading-relaxed">
+              All members have received their payout.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 py-8 px-6">
+          <div className="flex flex-col gap-3 py-4 px-6">
             <Button
-              className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-8 text-xl font-bold shadow-xl shadow-blue-900/20"
+              className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90 py-3 text-base font-semibold shadow-lg shadow-blue-900/20"
               onClick={handleRestartCycle}
               disabled={busyAction === "restartCycle"}
             >
@@ -277,31 +277,31 @@ export function GroupDetailPage() {
                 "Restarting..."
               ) : (
                 <>
-                  <span className="mr-3">🔄</span>
-                  Start a New Cycle (Round 1)
+                  <span className="mr-2">🔄</span>
+                  Start New Cycle
                 </>
               )}
             </Button>
-            
-            <div className="flex gap-4">
+
+            <div className="flex gap-3">
               <Button
                 variant="outline"
-                className="flex-1 border-gray-300 text-gray-600 py-6 text-base hover:bg-gray-100"
+                className="flex-1 border-gray-300 text-gray-600 py-2 text-sm hover:bg-gray-100"
                 onClick={handleViewReport}
               >
                 <FileText className="w-4 h-4 mr-2" />
-                View Final Report
+                View Report
               </Button>
               <Button
               variant="outline"
-              className="flex-1 border-red-400 text-red-600 hover:bg-red-50 py-6 text-base"
+              className="flex-1 border-red-400 text-red-600 hover:bg-red-50 py-2 text-sm"
               onClick={handleCloseGroup}
               disabled={busyAction === "closeGroup"}
             >
                 {busyAction === "closeGroup" ? "Closing..." : (
                   <>
                     <span className="mr-2">🏁</span>
-                    Finish & Close Group
+                    Close Group
                   </>
                 )}
               </Button>
