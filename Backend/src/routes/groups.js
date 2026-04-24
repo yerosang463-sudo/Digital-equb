@@ -378,12 +378,13 @@ router.post(
           is_public,
           created_by
         )
-         VALUES (?, ?, ?, ?, ?, 1, NULL, 'open', ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, 1, ?, 'open', ?, ?, ?, ?, ?, ?)`,
         [
           name,
           description || null,
           contribution_amount,
           frequency,
+          max_members,
           max_members,
           start_date || null,
           end_date || null,

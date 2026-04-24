@@ -16,6 +16,8 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(true);
+  const [googleError, setGoogleError] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -31,8 +33,15 @@ export function LoginPage() {
       await loginWithGoogle(response.credential);
       navigate(location.state?.from || "/dashboard");
     } catch (error) {
-      window.alert(error.message || "Google login failed");
+      setGoogleError(true);
+      window.alert(error.message || "Google login failed. Please try email/password login.");
     }
+  }
+
+  function handleGoogleError() {
+    setGoogleError(true);
+    setGoogleScriptLoaded(false);
+    window.alert("Google login unavailable. Please check your internet connection or use email/password login.");
   }
 
   async function performLogin(loginEmail, loginPassword) {
@@ -71,15 +80,22 @@ export function LoginPage() {
         <CardContent className="space-y-6">
           {/* Social Logins */}
           <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => window.alert("Google login failed")}
-              theme="filled_blue"
-              shape="pill"
-              size="large"
-              text="continue_with"
-              width="360"
-            />
+            {googleScriptLoaded && !googleError ? (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_blue"
+                shape="pill"
+                size="large"
+                text="continue_with"
+                width="360"
+              />
+            ) : (
+              <div className="w-full max-w-[360px] text-center">
+                <p className="text-gray-400 text-sm mb-2">Google login unavailable</p>
+                <p className="text-gray-500 text-xs">Please use email/password login below</p>
+              </div>
+            )}
           </div>
 
 

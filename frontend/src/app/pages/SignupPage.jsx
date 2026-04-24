@@ -19,6 +19,8 @@ export function SignupPage() {
     confirmPassword: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(true);
+  const [googleError, setGoogleError] = useState(false);
 
   if (isAuthenticated) {
     return <Navigate to="/dashboard" replace />;
@@ -33,8 +35,15 @@ export function SignupPage() {
       await loginWithGoogle(response.credential);
       navigate("/dashboard");
     } catch (error) {
-      window.alert(error.message || "Google signup failed");
+      setGoogleError(true);
+      window.alert(error.message || "Google signup failed. Please try email/password signup.");
     }
+  }
+
+  function handleGoogleError() {
+    setGoogleError(true);
+    setGoogleScriptLoaded(false);
+    window.alert("Google login unavailable. Please check your internet connection or use email/password signup.");
   }
 
   async function handleSignup(event) {
@@ -84,15 +93,22 @@ export function SignupPage() {
         
         <CardContent className="space-y-6">
           <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => window.alert("Google signup failed")}
-              theme="filled_blue"
-              shape="pill"
-              size="large"
-              text="signup_with"
-              width="360"
-            />
+            {googleScriptLoaded && !googleError ? (
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_blue"
+                shape="pill"
+                size="large"
+                text="signup_with"
+                width="360"
+              />
+            ) : (
+              <div className="w-full max-w-[360px] text-center">
+                <p className="text-gray-400 text-sm mb-2">Google signup unavailable</p>
+                <p className="text-gray-500 text-xs">Please use email/password signup below</p>
+              </div>
+            )}
           </div>
 
 

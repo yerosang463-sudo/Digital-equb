@@ -555,7 +555,8 @@ async function closeCurrentRound(conn, { groupId, adminUserId }) {
 
 function deriveDisplayStatus(group) {
   const memberCount = Number(group.member_count ?? group.current_members ?? 0);
-  const isFull = memberCount >= Number(group.max_members || 0);
+  const maxMembers = Number(group.max_members || 0);
+  const isFull = memberCount >= maxMembers && maxMembers > 0;
 
   if (group.status === 'completed') return 'completed';
   if (isFull && (group.status === 'open' || group.status === 'active')) return 'full';
