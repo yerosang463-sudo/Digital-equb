@@ -50,14 +50,21 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 const { execSync } = require('child_process');
+const { platform } = require('os');
 
 function killPort(port) {
   try {
-    // Windows: find and kill the process using the port
-    const result = execSync(
-      `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port} ^| findstr LISTENING') do taskkill /F /PID %a`,
-      { shell: 'cmd.exe', stdio: 'pipe' }
-    );
+    let command;
+    
+    if (platform() === 'win32') {
+      // Windows: find and kill the process using the port
+      command = `for /f "tokens=5" %a in ('netstat -aon ^| findstr :${port} ^| findstr LISTENING') do taskkill /F /PID %a`;
+    } else {
+      // Linux/Mac: find and kill the process using the port
+      command = `lsof -ti:${port} | xargs kill -9`;
+    }
+    
+    const result = execSync(command, { stdio: 'pipe' });
     console.log(`Killed process on port ${port}`);
   } catch {
     // No process was using the port, or kill failed silently
