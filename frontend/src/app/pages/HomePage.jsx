@@ -207,7 +207,7 @@ export function HomePage() {
                     <CheckCircle className="w-5 h-5 text-green-500" /> Up to 5 members
                   </li>
                   <li className="flex items-center gap-2 text-gray-600">
-                    <CheckCircle className="w-5 h-5 text-green-500" /> Manual winner selection
+                    <CheckCircle className="w-5 h-5 text-green-500" /> user  signup and group creation
                   </li>
                   <li className="flex items-center gap-2 text-gray-600">
                     <CheckCircle className="w-5 h-5 text-green-500" /> Basic bookkeeping
@@ -267,7 +267,7 @@ export function HomePage() {
                     <h4 className="font-bold text-gray-900 text-lg">Email Us</h4>
                     <p className="text-gray-600">We're here to help! Send us an email and we'll get back to you as soon as possible</p>
                     <div>
-                      <p><a href="yerosang463@gmail.com" className="text-blue-600 hover:underline">Email Us</a></p>
+                      <p><a href="mailto:yerosang463@gmail.com" className="text-blue-600 hover:underline">Email Us</a></p>
                     </div>
                   </div>
                     
