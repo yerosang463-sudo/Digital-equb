@@ -1532,6 +1532,38 @@ router.get('/payouts',
         });
       }
 
+      // Get total count first
+      const countQuery = `SELECT COUNT(*) as total FROM payouts WHERE 1=1`;
+      const countParams = [];
+      
+      if (status) {
+        countQuery += ' AND status = ?';
+        countParams.push(status);
+      }
+      
+      if (group_id) {
+        countQuery += ' AND group_id = ?';
+        countParams.push(group_id);
+      }
+      
+      const [countRows] = await pool.execute(countQuery, countParams);
+      const total = countRows[0].total;
+      
+      if (total === 0) {
+        return res.json({
+          success: true,
+          data: {
+            payouts: [],
+            pagination: {
+              page: parseInt(page),
+              limit: parseInt(limit),
+              total: 0,
+              pages: 0,
+            },
+          },
+        });
+      }
+      
       // Simplified query without JOINs to avoid database issues
       let query = `
         SELECT id, group_id, recipient_id, round_number, round_id, amount, status, 
@@ -1556,23 +1588,6 @@ router.get('/payouts',
         query += ' AND group_id = ?';
         params.push(group_id);
       }
-      
-      // Get total count
-      const countQuery = `SELECT COUNT(*) as total FROM payouts WHERE 1=1`;
-      const countParams = [];
-      
-      if (status) {
-        countQuery += ' AND status = ?';
-        countParams.push(status);
-      }
-      
-      if (group_id) {
-        countQuery += ' AND group_id = ?';
-        countParams.push(group_id);
-      }
-      
-      const [countRows] = await pool.execute(countQuery, countParams);
-      const total = countRows[0].total;
       
       // Add ordering and pagination
       query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
@@ -1625,14 +1640,16 @@ router.get('/payouts',
       });
     } catch (error) {
       console.error('Failed to fetch payouts:', error);
+      const currentPage = parseInt(req.query.page) || 1;
+      const currentLimit = parseInt(req.query.limit) || 20;
       // Return empty result instead of error to prevent frontend crash
       return res.json({
         success: true,
         data: {
           payouts: [],
           pagination: {
-            page: parseInt(page),
-            limit: parseInt(limit),
+            page: currentPage,
+            limit: currentLimit,
             total: 0,
             pages: 0,
           },
@@ -1846,12 +1863,14 @@ router.get('/analytics',
       console.log('Admin totals:', adminTotals);
 
       const userStats = {
-        ...userTotals,
-        admin_users: adminTotals?.admin_users || 0,
+        ...userTotals[0],
+        admin_users: adminTotals[0]?.admin_users || 0,
       };
-      
+
+      console.log('User stats:', userStats);
+
       // Get group statistics
-      const [groupStats] = await pool.execute(`
+      const [groupStatsResult] = await pool.execute(`
         SELECT
           COUNT(*) as total_groups,
           SUM(status = 'open') as open_groups,
@@ -1865,10 +1884,11 @@ router.get('/analytics',
         FROM equb_groups
       `);
 
+      const groupStats = groupStatsResult[0];
       console.log('Group stats:', groupStats);
-      
+
       // Get payment statistics
-      const [paymentStats] = await pool.execute(`
+      const [paymentStatsResult] = await pool.execute(`
         SELECT
           COUNT(*) as total_payments,
           SUM(status = 'completed') as completed_payments,
@@ -1879,6 +1899,7 @@ router.get('/analytics',
         FROM payments
       `);
 
+      const paymentStats = paymentStatsResult[0];
       console.log('Payment stats:', paymentStats);
       
       // Get recent activity
