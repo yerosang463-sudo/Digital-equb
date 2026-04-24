@@ -63,11 +63,6 @@ export function HomePage() {
                     Get Started Free
                   </Button>
                 </Link>
-                <Link to="/login?demo=1">
-                  <Button size="lg" variant="outline" className="border-2 border-white/30 text-white hover:bg-white/10 px-8 py-7 text-lg backdrop-blur-sm">
-                    Try Live Demo <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
               </div>
             </div>
 
