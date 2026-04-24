@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
@@ -6,6 +6,7 @@ import { Menu, X } from "lucide-react";
 export function Navbar({ variant = "default" }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const menuRef = useRef(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -14,6 +15,24 @@ export function Navbar({ variant = "default" }) {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMobileMenuOpen(false);
+      }
+    };
+
+    if (mobileMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [mobileMenuOpen]);
 
   const isTransparent = variant === "transparent" && !isScrolled;
 
@@ -72,7 +91,7 @@ export function Navbar({ variant = "default" }) {
         </div>
 
         {mobileMenuOpen &&
-        <div className={`md:hidden py-4 border-t border-gray-100 ${isScrolled ? "bg-white" : "bg-[#1E3A8A]"}`}>
+        <div ref={menuRef} className={`md:hidden py-4 border-t border-gray-100 ${isScrolled ? "bg-white" : "bg-[#1E3A8A]"}`}>
             <div className="flex flex-col gap-4 px-4">
               <a href="#features" className="font-medium" onClick={() => setMobileMenuOpen(false)}>About</a>
               <a href="#how-it-works" className="font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
