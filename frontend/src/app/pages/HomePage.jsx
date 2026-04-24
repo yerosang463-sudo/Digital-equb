@@ -213,7 +213,9 @@ export function HomePage() {
                     <CheckCircle className="w-5 h-5 text-green-500" /> Basic bookkeeping
                   </li>
                 </ul>
-                <Button className="w-full" variant="outline">Current Plan</Button>
+                <Link to="/login">
+                  <Button className="w-full bg-[#1E3A8A] hover:bg-[#1E3A8A]/90">Current Plan</Button>
+                </Link>
               </CardContent>
             </Card>
 
