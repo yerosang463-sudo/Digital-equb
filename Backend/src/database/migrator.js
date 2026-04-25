@@ -9,7 +9,7 @@ class DatabaseMigrator {
    */
   static async runMigrations() {
     try {
-      console.log('🔄 Starting database migrations...');
+      console.log('Starting database migrations...');
       
       // Create migrations tracking table first
       await this.createMigrationsTable();
@@ -34,7 +34,7 @@ class DatabaseMigrator {
         // Check if admin_actions table exists
         const [tables] = await pool.execute('SHOW TABLES LIKE "admin_actions"');
         if (tables.length === 0) {
-          console.log('⚠️  RBAC tables missing, forcing re-run of schema.sql...');
+          console.log('WARNING: RBAC tables missing, forcing re-run of schema.sql...');
           await this.forceRunMigrationFile('schema.sql');
         }
       }
@@ -44,11 +44,11 @@ class DatabaseMigrator {
         await this.runMigrationFile(file);
       }
       
-      console.log('✅ All database migrations completed successfully!');
-      console.log('📊 Database is ready for use');
+      console.log('All database migrations completed successfully!');
+      console.log('Database is ready for use');
       
     } catch (error) {
-      console.error('❌ Migration failed:', error.message);
+      console.error('Migration failed:', error.message);
       throw error;
     }
   }
@@ -69,7 +69,7 @@ class DatabaseMigrator {
       `);
     } catch (error) {
       // If this fails, database might not exist yet
-      console.log('⚠️  Database connection issue, will retry...');
+      console.log('WARNING: Database connection issue, will retry...');
       throw error;
     }
   }
@@ -86,7 +86,7 @@ class DatabaseMigrator {
       );
       
       if (existing.length > 0) {
-        console.log(`⏭️  Skipping ${filename} (already executed on ${existing[0].executed_at})`);
+        console.log(`Skipping ${filename} (already executed on ${existing[0].executed_at})`);
         return;
       }
       
@@ -168,7 +168,7 @@ class DatabaseMigrator {
       await this.runMigrationFile(filename);
       
     } catch (error) {
-      console.error(`❌ Failed to force execute migration ${filename}:`, error.message);
+      console.error(`Failed to force execute migration ${filename}:`, error.message);
       throw error;
     }
   }
@@ -213,13 +213,13 @@ class DatabaseMigrator {
       throw new Error('Cannot reset database in production!');
     }
     
-    console.log('🔄 Resetting database...');
+    console.log('Resetting database...');
     
     // Drop migrations table
     await pool.execute('DROP TABLE IF EXISTS migrations');
     
     // You can add more cleanup here if needed
-    console.log('✅ Database reset completed');
+    console.log('Database reset completed');
   }
 }
 

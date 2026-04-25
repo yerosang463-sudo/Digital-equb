@@ -22,9 +22,9 @@ async function autoMigrate() {
         `ALTER TABLE group_members ADD COLUMN has_paid_current_round TINYINT(1) DEFAULT 0 AFTER role`
       );
       
-      console.log('✅ has_paid_current_round column added successfully');
+      console.log('has_paid_current_round column added successfully');
     } else {
-      console.log('✅ has_paid_current_round column already exists');
+      console.log('has_paid_current_round column already exists');
     }
     
     // Verify the column was added
@@ -37,11 +37,11 @@ async function autoMigrate() {
     );
     
     if (verify.length > 0) {
-      console.log('✅ Column verification successful:', verify[0]);
+      console.log('Column verification successful:', verify[0]);
     }
     
   } catch (error) {
-    console.error('❌ Migration failed:', error.message);
+    console.error('Migration failed:', error.message);
     throw error;
   }
 }

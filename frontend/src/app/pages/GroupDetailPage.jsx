@@ -277,7 +277,7 @@ export function GroupDetailPage() {
                 "Restarting..."
               ) : (
                 <>
-                  <span className="mr-2">🔄</span>
+                  <span className="mr-2">↻</span>
                   Start New Cycle
                 </>
               )}
@@ -576,7 +576,7 @@ export function GroupDetailPage() {
 
                 {/* Payment status hint */}
                 <div className={`rounded-lg px-3 py-2.5 text-xs font-medium flex items-center gap-2 ${allMembersPaid ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
-                  <span>{allMembersPaid ? "✅" : "⏳"}</span>
+                  <span>{allMembersPaid ? "[Done]" : "[Pending]"}</span>
                   {allMembersPaid
                     ? "All members paid — winner selection ready!"
                     : `${paidMembers} of ${members.length} members paid`}
