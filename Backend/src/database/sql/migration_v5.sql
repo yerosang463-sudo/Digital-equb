@@ -1,7 +1,7 @@
 -- Migration v5: Add RBAC tables for admin system
 -- Roles, user_roles, and admin_actions tables for role-based access control
 
-USE `digital-equb`;
+USE `if0_41755694_digitalequb`;
 
 -- Roles table
 CREATE TABLE IF NOT EXISTS roles (
@@ -40,12 +40,9 @@ CREATE TABLE IF NOT EXISTS admin_actions (
   ip_address VARCHAR(45),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_admin_user_id (admin_user_id),
-  INDEX idx_action_type (action_type),
-  INDEX idx_target (target_type, target_id),
-  INDEX idx_created_at (created_at)
+  INDEX idx_admin_user_id (admin_user_id)
 );
 
 -- Seed admin role
-INSERT INTO roles (name, description, permissions) VALUES
+INSERT IGNORE INTO roles (name, description, permissions) VALUES
 ('admin', 'Full platform administrator with complete access to all features and data', '["users.view", "users.edit", "users.delete", "users.ban", "groups.view", "groups.edit", "groups.delete", "groups.force_close", "payments.view", "payments.edit", "payments.refund", "payouts.view", "payouts.edit", "analytics.view", "roles.assign", "roles.revoke", "system.manage"]');

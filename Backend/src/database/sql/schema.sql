@@ -1,9 +1,9 @@
 -- Digital Equb Database Schema
--- Database: digital-equb
--- User: yero
+-- Database: if0_41755694_digitalequb
+-- User: if0_41755694
 
-CREATE DATABASE IF NOT EXISTS `digital-equb`;
-USE `digital-equb`;
+CREATE DATABASE IF NOT EXISTS `if0_41755694_digitalequb`;
+USE `if0_41755694_digitalequb`;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -37,6 +37,7 @@ CREATE TABLE IF NOT EXISTS equb_groups (
   status ENUM('open', 'active', 'completed', 'cancelled') DEFAULT 'open',
   start_date DATE,
   end_date DATE,
+  is_public TINYINT(1) DEFAULT 0,
   winner_selection_mode ENUM('manual', 'random') DEFAULT 'random',
   auto_select_winner TINYINT(1) DEFAULT 1,
   created_by INT NOT NULL,
