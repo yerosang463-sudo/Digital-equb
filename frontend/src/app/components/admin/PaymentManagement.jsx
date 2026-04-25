@@ -276,7 +276,7 @@ const PaymentManagement = () => {
           </div>
 
           {/* Payments Table */}
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -366,7 +366,7 @@ const PaymentManagement = () => {
 
         <TabsContent value="payouts" className="space-y-6">
           {/* Payouts Table */}
-          <div className="border rounded-lg">
+          <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>

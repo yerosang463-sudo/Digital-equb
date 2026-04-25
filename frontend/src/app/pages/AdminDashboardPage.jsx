@@ -111,10 +111,10 @@ const AdminDashboardPage = () => {
       {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-4">
-              <Button 
-                variant="ghost" 
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center py-4 gap-4">
+            <div className="flex items-center space-x-4 w-full sm:w-auto">
+              <Button
+                variant="ghost"
                 size="icon"
                 onClick={() => handleNavigate('/')}
                 className="hover:bg-gray-100"
@@ -122,15 +122,15 @@ const AdminDashboardPage = () => {
                 <Home className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-                <p className="text-sm text-gray-500">Full platform administration</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p className="text-sm text-gray-500 hidden sm:block">Full platform administration</p>
               </div>
             </div>
-            
-            <div className="flex items-center space-x-4">
+
+            <div className="flex items-center justify-between sm:justify-end space-x-2 sm:space-x-4 w-full sm:w-auto">
               <div className="flex items-center space-x-2">
                 <Shield className="h-5 w-5 text-green-600" />
-                <div>
+                <div className="hidden sm:block">
                   <div>
                     <span className="text-sm font-medium text-gray-700">
                       {user?.full_name || 'Admin'}
@@ -147,15 +147,20 @@ const AdminDashboardPage = () => {
                     </span>
                   )}
                 </div>
+                <div className="sm:hidden">
+                  <span className="text-sm font-medium text-gray-700">
+                    {user?.full_name || 'Admin'}
+                  </span>
+                </div>
               </div>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
                 onClick={handleLogout}
                 className="flex items-center space-x-2"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <span className="hidden sm:inline">Logout</span>
               </Button>
             </div>
           </div>
@@ -227,24 +232,24 @@ const AdminDashboardPage = () => {
 
         {/* Navigation Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid grid-cols-5 w-full">
-            <TabsTrigger value="overview" className="flex items-center space-x-2">
+          <TabsList className="grid grid-cols-5 w-full lg:grid-cols-5 md:grid-cols-3 sm:grid-cols-2 overflow-x-auto">
+            <TabsTrigger value="overview" className="flex items-center space-x-2 whitespace-nowrap">
               <BarChart3 className="h-4 w-4" />
               <span>Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="users" className="flex items-center space-x-2">
+            <TabsTrigger value="users" className="flex items-center space-x-2 whitespace-nowrap">
               <Users className="h-4 w-4" />
               <span>Users</span>
             </TabsTrigger>
-            <TabsTrigger value="groups" className="flex items-center space-x-2">
+            <TabsTrigger value="groups" className="flex items-center space-x-2 whitespace-nowrap">
               <UsersRound className="h-4 w-4" />
               <span>Groups</span>
             </TabsTrigger>
-            <TabsTrigger value="payments" className="flex items-center space-x-2">
+            <TabsTrigger value="payments" className="flex items-center space-x-2 whitespace-nowrap">
               <CreditCard className="h-4 w-4" />
               <span>Payments</span>
             </TabsTrigger>
-            <TabsTrigger value="audit" className="flex items-center space-x-2">
+            <TabsTrigger value="audit" className="flex items-center space-x-2 whitespace-nowrap">
               <FileText className="h-4 w-4" />
               <span>Audit Logs</span>
             </TabsTrigger>
@@ -260,9 +265,9 @@ const AdminDashboardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Button 
-                    variant="outline" 
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <Button
+                    variant="outline"
                     className="flex flex-col items-center justify-center h-32"
                     onClick={() => setActiveTab('users')}
                   >
@@ -270,9 +275,9 @@ const AdminDashboardPage = () => {
                     <span>Manage Users</span>
                     <p className="text-xs text-gray-500 mt-1">View, edit, ban users</p>
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
+
+                  <Button
+                    variant="outline"
                     className="flex flex-col items-center justify-center h-32"
                     onClick={() => setActiveTab('groups')}
                   >
@@ -280,9 +285,9 @@ const AdminDashboardPage = () => {
                     <span>Manage Groups</span>
                     <p className="text-xs text-gray-500 mt-1">View, edit, close groups</p>
                   </Button>
-                  
-                  <Button 
-                    variant="outline" 
+
+                  <Button
+                    variant="outline"
                     className="flex flex-col items-center justify-center h-32"
                     onClick={() => setActiveTab('payments')}
                   >
@@ -303,7 +308,7 @@ const AdminDashboardPage = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
                     <div className="flex items-center space-x-3">
                       <Users className="h-5 w-5 text-blue-600" />
                       <div>
@@ -311,10 +316,10 @@ const AdminDashboardPage = () => {
                         <p className="text-sm text-gray-500">2 minutes ago</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
                   </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
                     <div className="flex items-center space-x-3">
                       <UsersRound className="h-5 w-5 text-green-600" />
                       <div>
@@ -322,10 +327,10 @@ const AdminDashboardPage = () => {
                         <p className="text-sm text-gray-500">15 minutes ago</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
                   </div>
-                  
-                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
                     <div className="flex items-center space-x-3">
                       <CreditCard className="h-5 w-5 text-purple-600" />
                       <div>
@@ -333,7 +338,7 @@ const AdminDashboardPage = () => {
                         <p className="text-sm text-gray-500">1 hour ago</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">View</Button>
+                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
                   </div>
                 </div>
               </CardContent>

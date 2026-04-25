@@ -91,7 +91,7 @@ class DatabaseMigrator {
       }
       
       // Check if file exists
-      const sqlPath = path.join(__dirname, filename);
+      const sqlPath = path.join(__dirname, 'sql', filename);
       if (!fs.existsSync(sqlPath)) {
         console.log(`  Migration file ${filename} not found, skipping`);
         return;

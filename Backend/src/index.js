@@ -5,7 +5,7 @@ require('./config/env');
 
 const { testConnection } = require('./config/db');
 const { DatabaseMigrator } = require('./database/migrator');
-const { autoMigrate } = require('./migrations/auto-migrate');
+const { autoMigrate } = require('./database/auto-migrate');
 const { errorHandler } = require('./middleware/errorHandler');
 
 const authRoutes = require('./routes/auth');
