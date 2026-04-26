@@ -11,15 +11,15 @@ services:
       - key: NODE_ENV
         value: production
       - key: DB_HOST
-        value: sql208.infinityfree.com
+        value: sql12.freesqldatabase.com
       - key: DB_PORT
         value: 3306
       - key: DB_USER
-        value: if0_41755694
+        value: sql12824412
       - key: DB_PASSWORD
-        value: Yero27101620
+        value: buUvLxRXXv
       - key: DB_NAME
-        value: if0_41755694_digitalequb
+        value: sql12824412
       - key: JWT_SECRET
         value: digital-equb-jwt-secret-key-2024
       - key: JWT_EXPIRES_IN

@@ -1,9 +1,9 @@
 -- Digital Equb Database Schema
--- Database: if0_41755694_digitalequb
--- User: if0_41755694
+-- Database: sql12824412
+-- User: sql12824412
 
-CREATE DATABASE IF NOT EXISTS `if0_41755694_digitalequb`;
-USE `if0_41755694_digitalequb`;
+CREATE DATABASE IF NOT EXISTS `sql12824412`;
+USE `sql12824412`;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

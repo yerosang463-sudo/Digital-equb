@@ -1,4 +1,4 @@
-USE `if0_41755694_digitalequb`;
+USE `sql12824412`;
 
 ALTER TABLE users
   ADD COLUMN IF NOT EXISTS notify_payment_reminders TINYINT(1) DEFAULT 1,
