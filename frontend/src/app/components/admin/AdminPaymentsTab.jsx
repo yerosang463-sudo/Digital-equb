@@ -17,4 +17,4 @@ function AdminPaymentsTab() {
   );
 }
 
-export default AdminPaymentsTabComponent;
+export default AdminPaymentsTab;

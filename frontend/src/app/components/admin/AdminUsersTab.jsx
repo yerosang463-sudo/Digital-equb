@@ -17,4 +17,4 @@ function AdminUsersTab() {
   );
 }
 
-export default AdminUsersTabComponent;
+export default AdminUsersTab;

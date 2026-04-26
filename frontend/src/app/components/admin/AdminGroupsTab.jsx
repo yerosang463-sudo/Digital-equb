@@ -17,4 +17,4 @@ function AdminGroupsTab() {
   );
 }
 
-export default AdminGroupsTabComponent;
+export default AdminGroupsTab;

@@ -17,4 +17,4 @@ function AdminAuditTab() {
   );
 }
 
-export default AdminAuditTabComponent;
+export default AdminAuditTab;
