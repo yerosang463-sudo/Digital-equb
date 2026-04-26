@@ -41,7 +41,6 @@ CREATE TABLE IF NOT EXISTS equb_groups (
   winner_selection_mode ENUM('manual', 'random') DEFAULT 'random',
   auto_select_winner TINYINT(1) DEFAULT 1,
   created_by INT NOT NULL,
-  total_pot DECIMAL(12, 2) GENERATED ALWAYS AS (contribution_amount * max_members) STORED,
   created_at DATETIME DEFAULT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE RESTRICT,
