@@ -13,6 +13,10 @@ import { PaymentsPage } from "./pages/PaymentsPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { AboutPage } from "./pages/AboutPage";
+import { PricingPage } from "./pages/PricingPage";
+import { ContactPage } from "./pages/ContactPage";
+import { HowItWorksPage } from "./pages/HowItWorksPage";
 
 export const router = createBrowserRouter([
   {
@@ -21,7 +25,11 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: "login", element: <LoginPage /> },
-      { path: "signup", element: <SignupPage /> }
+      { path: "signup", element: <SignupPage /> },
+      { path: "about", element: <AboutPage /> },
+      { path: "how-it-works", element: <HowItWorksPage /> },
+      { path: "pricing", element: <PricingPage /> },
+      { path: "contact", element: <ContactPage /> }
     ]
   },
   {

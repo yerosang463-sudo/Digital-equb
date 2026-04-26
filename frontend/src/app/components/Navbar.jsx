@@ -20,14 +20,6 @@ const Navbar = memo(function Navbar({ variant = "default" }) {
     }
   }, []);
 
-  // Memoize smooth scroll handler
-  const handleSmoothScroll = useCallback((elementId) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, []);
-
   // Memoize mobile menu toggle
   const toggleMobileMenu = useCallback(() => {
     setMobileMenuOpen(prev => !prev);
@@ -61,12 +53,7 @@ const Navbar = memo(function Navbar({ variant = "default" }) {
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" onClick={(e) => {
-            if (window.location.pathname === "/") {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-            }
-          }} className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-colors duration-300 ${
               isTransparent ? "bg-white" : "bg-[#1E3A8A]"
             }`}>
@@ -78,22 +65,10 @@ const Navbar = memo(function Navbar({ variant = "default" }) {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
-              e.preventDefault();
-              handleSmoothScroll('features');
-            }}>About</a>
-            <a href="#how-it-works" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
-              e.preventDefault();
-              handleSmoothScroll('how-it-works');
-            }}>How It Works</a>
-            <a href="#pricing" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
-              e.preventDefault();
-              handleSmoothScroll('pricing');
-            }}>Pricing</a>
-            <a href="#contact" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
-              e.preventDefault();
-              handleSmoothScroll('contact');
-            }}>Contact</a>
+            <Link to="/about" className="font-medium hover:text-blue-500 transition-colors">About</Link>
+            <Link to="/how-it-works" className="font-medium hover:text-blue-500 transition-colors">How It Works</Link>
+            <Link to="/pricing" className="font-medium hover:text-blue-500 transition-colors">Pricing</Link>
+            <Link to="/contact" className="font-medium hover:text-blue-500 transition-colors">Contact</Link>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -121,26 +96,10 @@ const Navbar = memo(function Navbar({ variant = "default" }) {
         {mobileMenuOpen &&
         <div ref={menuRef} className={`md:hidden py-4 border-t border-gray-100 ${isScrolled ? "bg-white" : "bg-[#1E3A8A]"}`}>
             <div className="flex flex-col gap-4 px-4">
-              <a href="#features" className="font-medium" onClick={(e) => {
-                e.preventDefault();
-                setMobileMenuOpen(false);
-                handleSmoothScroll('features');
-              }}>About</a>
-              <a href="#how-it-works" className="font-medium" onClick={(e) => {
-                e.preventDefault();
-                setMobileMenuOpen(false);
-                handleSmoothScroll('how-it-works');
-              }}>How It Works</a>
-              <a href="#pricing" className="font-medium" onClick={(e) => {
-                e.preventDefault();
-                setMobileMenuOpen(false);
-                handleSmoothScroll('pricing');
-              }}>Pricing</a>
-              <a href="#contact" className="font-medium" onClick={(e) => {
-                e.preventDefault();
-                setMobileMenuOpen(false);
-                handleSmoothScroll('contact');
-              }}>Contact</a>
+              <Link to="/about" className="font-medium" onClick={() => setMobileMenuOpen(false)}>About</Link>
+              <Link to="/how-it-works" className="font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</Link>
+              <Link to="/pricing" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Pricing</Link>
+              <Link to="/contact" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Contact</Link>
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" className="w-full">Login</Button>
