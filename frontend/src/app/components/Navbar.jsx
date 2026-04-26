@@ -61,10 +61,34 @@ export function Navbar({ variant = "default" }) {
           </Link>
 
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="font-medium hover:text-blue-500 transition-colors">About</a>
-            <a href="#how-it-works" className="font-medium hover:text-blue-500 transition-colors">How It Works</a>
-            <a href="#pricing" className="font-medium hover:text-blue-500 transition-colors">Pricing</a>
-            <a href="#contact" className="font-medium hover:text-blue-500 transition-colors">Contact</a>
+            <a href="#features" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('features');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>About</a>
+            <a href="#how-it-works" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('how-it-works');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>How It Works</a>
+            <a href="#pricing" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('pricing');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>Pricing</a>
+            <a href="#contact" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
+              e.preventDefault();
+              const element = document.getElementById('contact');
+              if (element) {
+                element.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}>Contact</a>
           </div>
 
           <div className="hidden md:flex items-center gap-4">
@@ -93,10 +117,38 @@ export function Navbar({ variant = "default" }) {
         {mobileMenuOpen &&
         <div ref={menuRef} className={`md:hidden py-4 border-t border-gray-100 ${isScrolled ? "bg-white" : "bg-[#1E3A8A]"}`}>
             <div className="flex flex-col gap-4 px-4">
-              <a href="#features" className="font-medium" onClick={() => setMobileMenuOpen(false)}>About</a>
-              <a href="#how-it-works" className="font-medium" onClick={() => setMobileMenuOpen(false)}>How It Works</a>
-              <a href="#pricing" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Pricing</a>
-              <a href="#contact" className="font-medium" onClick={() => setMobileMenuOpen(false)}>Contact</a>
+              <a href="#features" className="font-medium" onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                const element = document.getElementById('features');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}>About</a>
+              <a href="#how-it-works" className="font-medium" onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                const element = document.getElementById('how-it-works');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}>How It Works</a>
+              <a href="#pricing" className="font-medium" onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                const element = document.getElementById('pricing');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}>Pricing</a>
+              <a href="#contact" className="font-medium" onClick={(e) => {
+                e.preventDefault();
+                setMobileMenuOpen(false);
+                const element = document.getElementById('contact');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}>Contact</a>
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" className="w-full" onClick={() => setMobileMenuOpen(false)}>
                   <Button variant="ghost" className="w-full">Login</Button>
