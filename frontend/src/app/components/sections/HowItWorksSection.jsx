@@ -3,7 +3,7 @@ function HowItWorksSection() {
     {
       number: "1",
       title: "Create or Join Group",
-      description: "Start your own savings group or join an existing one with trusted community members."
+      description: "Login and Go to user dashboard. Start your own savings group or join an existing one with trusted community members."
     },
     {
       number: "2", 
