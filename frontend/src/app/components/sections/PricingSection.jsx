@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { Button } from "../ui/button";
 
 function PricingSection() {
@@ -103,6 +104,7 @@ function PricingSection() {
                 ))}
               </ul>
 
+              <Link to="/login">
               <Button
                 className={`w-full py-3 ${
                   plan.highlighted
@@ -112,6 +114,7 @@ function PricingSection() {
               >
                 Get Started
               </Button>
+            </Link>
             </div>
           ))}
         </div>
