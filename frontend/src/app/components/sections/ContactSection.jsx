@@ -77,7 +77,7 @@ function ContactSection() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder="Enter your Email"
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         className="mt-1"
@@ -133,7 +133,7 @@ function ContactSection() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Phone</p>
-                        <p className="text-gray-600">+251 911 234 567</p>
+                        <p className="text-gray-600">+251 972467962</p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-3">
@@ -142,7 +142,7 @@ function ContactSection() {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">Office</p>
-                        <p className="text-gray-600">Addis Ababa, Ethiopia</p>
+                        <p className="text-gray-600">Arsi, Asella</p>
                       </div>
                     </div>
                   </div>
