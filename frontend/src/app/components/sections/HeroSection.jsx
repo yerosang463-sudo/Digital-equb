@@ -18,7 +18,7 @@ function HeroSection() {
               Traditional Ethiopian savings circle, powered by modern technology. Save together, grow together with Digital Equb.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Link to="/signup">
+              <Link to="/login">
                 <Button size="lg" className="bg-yellow-400 text-blue-900 hover:bg-yellow-500 px-8 py-7 text-lg font-bold transition-all duration-300 transform hover:scale-105 shadow-xl">
                   Get Started Free
                 </Button>

@@ -184,7 +184,7 @@ function ContactSection() {
           <p className="text-xl mb-8 text-blue-100">
             Join thousands of Ethiopians building their financial future together
           </p>
-          <Link to="/signup">
+          <Link to="/login">
             <Button 
               size="lg" 
               className="bg-white text-[#1E3A8A] hover:bg-gray-100 px-8 py-6 text-lg"
