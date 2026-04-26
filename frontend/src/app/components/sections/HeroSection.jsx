@@ -33,13 +33,14 @@ function HeroSection() {
               <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl"></div>
               <div className="absolute -bottom-10 -right-10 w-48 h-48 bg-yellow-400/10 rounded-full blur-3xl"></div>
               
-              {/* Lazy load hero image */}
-              <img 
-                src="https://images.unsplash.com/photo-1554224154-260325c05f6c?w=800&h=600&fit=crop&crop=center" 
-                alt="Digital Equb Community Savings" 
-                className="relative z-10 w-full h-auto object-contain drop-shadow-2xl"
-                loading="lazy"
-              />
+              {/* Hero illustration using CSS */}
+              <div className="relative z-10 w-full h-80 bg-gradient-to-br from-blue-500/20 to-blue-600/30 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-blue-400/30 shadow-2xl">
+                <div className="text-center">
+                  <div className="text-6xl mb-4">💰</div>
+                  <div className="text-2xl font-bold text-white mb-2">Smart Savings</div>
+                  <div className="text-blue-200">Community-powered finance</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
