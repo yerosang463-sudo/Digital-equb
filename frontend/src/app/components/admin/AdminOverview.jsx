@@ -1,11 +1,8 @@
-import { lazy } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Users, UsersRound, CreditCard, BarChart3, Home } from "lucide-react";
 
-export const AdminOverview = lazy(() => import('./AdminOverview'));
-
-function AdminOverviewComponent({ stats, setActiveTab }) {
+function AdminOverview({ stats, setActiveTab }) {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
@@ -155,4 +152,4 @@ function AdminOverviewComponent({ stats, setActiveTab }) {
   );
 }
 
-export default AdminOverviewComponent;
+export default AdminOverview;

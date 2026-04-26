@@ -1,10 +1,7 @@
-import { lazy } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import UserManagement from "./UserManagement";
 
-export const AdminUsersTab = lazy(() => import('./AdminUsersTab'));
-
-function AdminUsersTabComponent() {
+function AdminUsersTab() {
   return (
     <Card>
       <CardHeader>

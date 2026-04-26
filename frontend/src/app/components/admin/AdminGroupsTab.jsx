@@ -1,10 +1,7 @@
-import { lazy } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import GroupManagement from "./GroupManagement";
 
-export const AdminGroupsTab = lazy(() => import('./AdminGroupsTab'));
-
-function AdminGroupsTabComponent() {
+function AdminGroupsTab() {
   return (
     <Card>
       <CardHeader>

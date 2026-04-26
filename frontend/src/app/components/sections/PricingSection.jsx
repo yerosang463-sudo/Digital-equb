@@ -1,9 +1,6 @@
-import { lazy } from 'react';
 import { Button } from "../ui/button";
 
-export const PricingSection = lazy(() => import('./PricingSection'));
-
-function PricingSectionComponent() {
+function PricingSection() {
   const plans = [
     {
       name: "Basic",
@@ -123,4 +120,4 @@ function PricingSectionComponent() {
   );
 }
 
-export default PricingSectionComponent;
+export default PricingSection;

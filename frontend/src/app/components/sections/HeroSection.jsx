@@ -1,10 +1,7 @@
-import { lazy } from 'react';
 import { Link } from "react-router";
 import { Button } from "../ui/button";
 
-export const HeroSection = lazy(() => import('./HeroSection'));
-
-function HeroSectionComponent() {
+function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-[#1E3A8A] pt-20">
       {/* Background Decorative Element (Diagonal Cut) */}
@@ -58,4 +55,4 @@ function HeroSectionComponent() {
   );
 }
 
-export default HeroSectionComponent;
+export default HeroSection;

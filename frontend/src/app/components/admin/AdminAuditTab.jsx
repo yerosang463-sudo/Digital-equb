@@ -1,10 +1,7 @@
-import { lazy } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import AuditLogs from "./AuditLogs";
 
-export const AdminAuditTab = lazy(() => import('./AdminAuditTab'));
-
-function AdminAuditTabComponent() {
+function AdminAuditTab() {
   return (
     <Card>
       <CardHeader>

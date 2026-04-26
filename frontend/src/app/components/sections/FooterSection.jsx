@@ -1,8 +1,4 @@
-import { lazy } from 'react';
-
-export const FooterSection = lazy(() => import('./FooterSection'));
-
-function FooterSectionComponent() {
+function FooterSection() {
   return (
     <footer className="bg-gray-900 text-gray-400 py-6 sm:py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,4 +45,4 @@ function FooterSectionComponent() {
   );
 }
 
-export default FooterSectionComponent;
+export default FooterSection;

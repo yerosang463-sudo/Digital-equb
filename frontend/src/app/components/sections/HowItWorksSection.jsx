@@ -1,8 +1,4 @@
-import { lazy } from 'react';
-
-export const HowItWorksSection = lazy(() => import('./HowItWorksSection'));
-
-function HowItWorksSectionComponent() {
+function HowItWorksSection() {
   const steps = [
     {
       number: "1",
@@ -68,4 +64,4 @@ function HowItWorksSectionComponent() {
   );
 }
 
-export default HowItWorksSectionComponent;
+export default HowItWorksSection;

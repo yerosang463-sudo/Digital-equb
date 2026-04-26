@@ -1,10 +1,7 @@
-import { lazy } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import PaymentManagement from "./PaymentManagement";
 
-export const AdminPaymentsTab = lazy(() => import('./AdminPaymentsTab'));
-
-function AdminPaymentsTabComponent() {
+function AdminPaymentsTab() {
   return (
     <Card>
       <CardHeader>

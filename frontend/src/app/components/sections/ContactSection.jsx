@@ -1,12 +1,10 @@
-import { useState, lazy, Suspense } from 'react';
+import { useState } from 'react';
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 
-export const ContactSection = lazy(() => import('./ContactSection'));
-
-function ContactSectionComponent() {
+function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
@@ -242,4 +240,4 @@ function ContactSectionComponent() {
   );
 }
 
-export default ContactSectionComponent;
+export default ContactSection;

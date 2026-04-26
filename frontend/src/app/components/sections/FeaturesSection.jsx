@@ -1,9 +1,6 @@
-import { lazy } from 'react';
 import { Card, CardContent } from "../ui/card";
 
-export const FeaturesSection = lazy(() => import('./FeaturesSection'));
-
-function FeaturesSectionComponent() {
+function FeaturesSection() {
   const features = [
     {
       icon: "🤝",
@@ -69,4 +66,4 @@ function FeaturesSectionComponent() {
   );
 }
 
-export default FeaturesSectionComponent;
+export default FeaturesSection;
