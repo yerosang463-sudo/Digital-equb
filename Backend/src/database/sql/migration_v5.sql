@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS roles (
 
   description TEXT,
 
-  permissions JSON NOT NULL,
+  permissions TEXT NOT NULL,
 
   created_at DATETIME DEFAULT NULL,
 
@@ -74,7 +74,7 @@ CREATE TABLE IF NOT EXISTS admin_actions (
 
   target_id INT,
 
-  details JSON,
+  details TEXT,
 
   ip_address VARCHAR(45),
 

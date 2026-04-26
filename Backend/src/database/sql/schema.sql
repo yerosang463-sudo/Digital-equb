@@ -171,7 +171,7 @@ CREATE TABLE IF NOT EXISTS roles (
   id INT AUTO_INCREMENT PRIMARY KEY,
   name VARCHAR(50) NOT NULL UNIQUE,
   description TEXT,
-  permissions JSON NOT NULL,
+  permissions TEXT NOT NULL,
   created_at DATETIME DEFAULT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_name (name)
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS admin_actions (
   action_type VARCHAR(50) NOT NULL,
   target_type VARCHAR(50) NOT NULL,
   target_id INT,
-  details JSON,
+  details TEXT,
   ip_address VARCHAR(45),
   created_at DATETIME DEFAULT NULL,
   FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE CASCADE,
