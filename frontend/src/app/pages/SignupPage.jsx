@@ -22,10 +22,6 @@ export function SignupPage() {
   const [googleScriptLoaded, setGoogleScriptLoaded] = useState(true);
   const [googleError, setGoogleError] = useState(false);
 
-  if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
-  }
-
   function handleChange(event) {
     setFormData({ ...formData, [event.target.id]: event.target.value });
   }
