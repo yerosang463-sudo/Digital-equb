@@ -1,4 +1,4 @@
-import { createBrowserRouter, Outlet } from "react-router";
+import { createBrowserRouter, Outlet, lazy, Suspense } from "react-router";
 import { RootLayout } from "./layouts/RootLayout";
 import { DashboardLayout } from "./layouts/DashboardLayout";
 import { HomePage } from "./pages/HomePage";
@@ -9,10 +9,12 @@ import { BrowseGroupsPage } from "./pages/BrowseGroupsPage";
 import { GroupDetailPage } from "./pages/GroupDetailPage";
 import { PaymentsPage } from "./pages/PaymentsPage";
 import { ProfilePage } from "./pages/ProfilePage";
-import AdminDashboardPage from "./pages/AdminDashboardPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import AdminRouteProtection from "./components/AdminRouteProtection";
 import UserRouteProtection from "./components/UserRouteProtection";
+
+// Lazy load heavy components
+const AdminDashboardPage = lazy(() => import("./pages/AdminDashboardPage"));
 
 export const router = createBrowserRouter([
 {
@@ -44,7 +46,16 @@ export const router = createBrowserRouter([
   path: "/admin",
   element: <AdminRouteProtection />,
   children: [
-    { index: true, element: <AdminDashboardPage /> }
+    { 
+      index: true, 
+      element: (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>}>
+          <AdminDashboardPage />
+        </Suspense>
+      ) 
+    }
   ]
 },
 {
