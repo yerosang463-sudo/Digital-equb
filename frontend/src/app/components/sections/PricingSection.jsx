@@ -104,6 +104,7 @@ function PricingSection() {
                 ))}
               </ul>
 
+              {plan.name === "Basic" ? (
               <Link to="/login">
               <Button
                 className={`w-full py-3 ${
@@ -115,6 +116,17 @@ function PricingSection() {
                 Get Started
               </Button>
             </Link>
+            ) : (
+              <Button
+                className={`w-full py-3 ${
+                  plan.highlighted
+                    ? "bg-white text-blue-600 hover:bg-gray-100"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
+              >
+                Get Started
+              </Button>
+            )}
             </div>
           ))}
         </div>
