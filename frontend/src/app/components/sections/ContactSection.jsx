@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
@@ -183,13 +184,14 @@ function ContactSection() {
           <p className="text-xl mb-8 text-blue-100">
             Join thousands of Ethiopians building their financial future together
           </p>
-          <Button 
-            size="lg" 
-            className="bg-white text-[#1E3A8A] hover:bg-gray-100 px-8 py-6 text-lg"
-            onClick={() => window.location.href = '/signup'}
-          >
-            Create Free Account
-          </Button>
+          <Link to="/signup">
+            <Button 
+              size="lg" 
+              className="bg-white text-[#1E3A8A] hover:bg-gray-100 px-8 py-6 text-lg"
+            >
+              Create Free Account
+            </Button>
+          </Link>
         </div>
       </section>
 
