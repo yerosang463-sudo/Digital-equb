@@ -14,5 +14,9 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
-  ]
+  ],
+  "env": {
+    "VITE_API_BASE_URL": "https://digital-equb-2.onrender.com",
+    "VITE_GOOGLE_CLIENT_ID": "640189153673-g3aeovpv6shim22e4r2s5ijr14ffqkpl.apps.googleusercontent.com"
+  }
 }
