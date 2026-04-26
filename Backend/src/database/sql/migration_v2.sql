@@ -4,9 +4,9 @@ USE `sql12824412`;
 -- notify_payment_reminders, notify_winner_announcements, notify_new_member_alerts, notify_email_updates
 
 ALTER TABLE equb_groups
-  ADD COLUMN IF NOT EXISTS cycle_total_rounds INT NULL,
-  ADD COLUMN IF NOT EXISTS winner_selection_mode ENUM('manual', 'random') DEFAULT 'random',
-  ADD COLUMN IF NOT EXISTS auto_select_winner TINYINT(1) DEFAULT 1;
+  ADD COLUMN cycle_total_rounds INT NULL,
+  ADD COLUMN winner_selection_mode ENUM('manual', 'random') DEFAULT 'random',
+  ADD COLUMN auto_select_winner TINYINT(1) DEFAULT 1;
 
 UPDATE equb_groups g
 SET g.cycle_total_rounds = (
