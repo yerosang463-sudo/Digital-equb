@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
   email VARCHAR(150) NOT NULL,
   message TEXT NOT NULL,
   status ENUM('new', 'read', 'replied') DEFAULT 'new',
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT NULL,
   INDEX idx_email (email),
   INDEX idx_status (status)
 );

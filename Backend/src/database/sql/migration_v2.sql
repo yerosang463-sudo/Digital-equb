@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS equb_rounds (
   winner_id INT NULL,
   winner_selected_by INT NULL,
   selection_method ENUM('manual', 'random', 'auto') NULL,
-  started_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  started_at DATETIME DEFAULT NULL,
   closed_at TIMESTAMP NULL,
   UNIQUE KEY unique_group_round (group_id, round_number),
   FOREIGN KEY (group_id) REFERENCES equb_groups(id) ON DELETE CASCADE,
