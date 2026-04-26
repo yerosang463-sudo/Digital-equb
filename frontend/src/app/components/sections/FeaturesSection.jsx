@@ -55,10 +55,10 @@ function FeaturesSection() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {features.map((feature, index) => (
-            <Card key={index} className="border-0 shadow-lg hover:shadow-2xl hover:shadow-purple-200 transition-all duration-300 transform hover:-translate-y-3 group hover:bg-gradient-to-br hover:from-purple-50 hover:to-white">
+            <Card key={index} className="border-0 shadow-lg hover:shadow-2xl hover:shadow-purple-200 active:shadow-xl active:shadow-purple-300 transition-all duration-300 transform hover:-translate-y-3 active:-translate-y-2 group hover:bg-gradient-to-br hover:from-purple-50 hover:to-white active:bg-gradient-to-br active:from-purple-100 active:to-white">
               <CardContent className="p-8">
-                <div className="text-5xl mb-4 group-hover:scale-125 group-hover:rotate-6 transition-all duration-300">{feature.icon}</div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-purple-600 transition-colors duration-300">
+                <div className="text-5xl mb-4 group-hover:scale-125 group-hover:rotate-6 active:scale-150 active:rotate-12 transition-all duration-300">{feature.icon}</div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-purple-600 active:text-purple-700 transition-colors duration-300">
                   {feature.title}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
