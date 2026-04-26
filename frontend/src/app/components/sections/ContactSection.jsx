@@ -18,11 +18,24 @@ function ContactSection() {
     
     setIsSubmitting(true);
     try {
-      // Simulate API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setIsSent(true);
-      setFormData({ name: "", email: "", message: "" });
-      setTimeout(() => setIsSent(false), 5000);
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://digital-equb-api.onrender.com';
+      const response = await fetch(`${API_BASE_URL}/api/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setIsSent(true);
+        setFormData({ name: "", email: "", message: "" });
+        setTimeout(() => setIsSent(false), 5000);
+      } else {
+        throw new Error(data.message || 'Failed to send message');
+      }
     } catch (error) {
       window.alert(error.message || "Failed to send message. Please try again later.");
     } finally {
