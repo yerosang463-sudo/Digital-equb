@@ -1,10 +1,7 @@
 USE `sql12824412`;
 
-ALTER TABLE users
-  ADD COLUMN IF NOT EXISTS notify_payment_reminders TINYINT(1) DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS notify_winner_announcements TINYINT(1) DEFAULT 1,
-  ADD COLUMN IF NOT EXISTS notify_new_member_alerts TINYINT(1) DEFAULT 0,
-  ADD COLUMN IF NOT EXISTS notify_email_updates TINYINT(1) DEFAULT 1;
+-- Columns already exist in schema.sql, no need to add them
+-- notify_payment_reminders, notify_winner_announcements, notify_new_member_alerts, notify_email_updates
 
 ALTER TABLE equb_groups
   ADD COLUMN IF NOT EXISTS cycle_total_rounds INT NULL,
@@ -40,10 +37,10 @@ ALTER TABLE payments
   ADD COLUMN IF NOT EXISTS round_id INT NULL,
   ADD COLUMN IF NOT EXISTS round_number INT NULL,
   ADD COLUMN IF NOT EXISTS telebirr_phone VARCHAR(20) NULL,
-  ADD COLUMN IF NOT EXISTS simulation_status ENUM('initiated', 'success', 'failed') DEFAULT 'initiated';
+  ADD COLUMN simulation_status ENUM('initiated', 'success', 'failed') DEFAULT 'initiated';
 
-ALTER TABLE payments
-  MODIFY COLUMN payment_method ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other') DEFAULT 'telebirr';
+ALTER TABLE p
+  MODIFY COLthod ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other') DEFAULT 'telebirr';
 
 SET @payments_round_fk_exists := (
   SELECT COUNT(*)
@@ -68,7 +65,7 @@ ALTER TABLE payouts
   ADD COLUMN IF NOT EXISTS round_id INT NULL;
 
 SET @payouts_round_fk_exists := (
-  SELECT COUNT(*)
+  SELECT COUN
   FROM information_schema.TABLE_CONSTRAINTS
   WHERE CONSTRAINT_SCHEMA = DATABASE()
     AND TABLE_NAME = 'payouts'
