@@ -65,6 +65,7 @@
     "@vitejs/plugin-react": "4.7.0",
     "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "4.1.12",
+    "terser": "^5.46.2",
     "vite": "6.3.5"
   },
   "description": "Digital Equb - Ethiopian Savings Circle Web App"

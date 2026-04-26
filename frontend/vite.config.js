@@ -31,7 +31,9 @@ export default defineConfig({
             '@radix-ui/react-popover',
             '@radix-ui/react-select',
             '@radix-ui/react-tabs',
-            '@radix-ui/react-slot'
+            '@radix-ui/react-slot',
+            'class-variance-authority',
+            'clsx'
           ],
           
           // Authentication
@@ -53,15 +55,6 @@ export default defineConfig({
             './src/app/components/sections/HowItWorksSection',
             './src/app/components/sections/PricingSection',
             './src/app/components/sections/ContactSection'
-          ],
-          
-          // Dashboard components
-          dashboard: [
-            './src/app/pages/DashboardPage',
-            './src/app/pages/BrowseGroupsPage',
-            './src/app/pages/GroupDetailPage',
-            './src/app/pages/PaymentsPage',
-            './src/app/pages/ProfilePage'
           ]
         },
       },
