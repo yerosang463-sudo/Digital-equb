@@ -23,7 +23,7 @@ function HowItWorksSection() {
   ];
 
   return (
-    <section id="how-it-works" className="py-20 bg-gradient-to-b from-white via-blue-50 to-white relative overflow-hidden">
+    <section id="how-it-works" className="py-10 bg-gradient-to-b from-white via-blue-50 to-white relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
@@ -32,12 +32,12 @@ function HowItWorksSection() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="text-center mb-16">
+        <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            How Digital Equb Works
+            Follow This Steps
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Simple, transparent, and fair savings management in four easy steps.
+            Follow this steps achieve what you want for saving today, taking tomorrow
           </p>
         </div>
 
