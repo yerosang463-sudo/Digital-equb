@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router';
 import { 
   Card, 
@@ -21,10 +21,23 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../providers/AuthProvider';
 import { apiRequest } from '../lib/api';
-import UserManagement from '../components/admin/UserManagement';
-import GroupManagement from '../components/admin/GroupManagement';
-import PaymentManagement from '../components/admin/PaymentManagement';
-import AuditLogs from '../components/admin/AuditLogs';
+
+// Lazy load admin components for optimal performance
+const AdminOverview = lazy(() => import('../components/admin/AdminOverview'));
+const AdminUsersTab = lazy(() => import('../components/admin/AdminUsersTab'));
+const AdminGroupsTab = lazy(() => import('../components/admin/AdminGroupsTab'));
+const AdminPaymentsTab = lazy(() => import('../components/admin/AdminPaymentsTab'));
+const AdminAuditTab = lazy(() => import('../components/admin/AdminAuditTab'));
+
+// Loading component for admin sections
+const AdminSectionLoader = () => (
+  <div className="flex items-center justify-center py-20">
+    <div className="flex flex-col items-center gap-4">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <p className="text-gray-600">Loading admin data...</p>
+    </div>
+  </div>
+);
 
 const AdminDashboardPage = () => {
   const navigate = useNavigate();
@@ -257,152 +270,37 @@ const AdminDashboardPage = () => {
 
           {/* Overview Tab */}
           <TabsContent value="overview" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>
-                  Common administrative tasks
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                  <Button
-                    variant="outline"
-                    className="flex flex-col items-center justify-center h-32"
-                    onClick={() => setActiveTab('users')}
-                  >
-                    <Users className="h-8 w-8 mb-2" />
-                    <span>Manage Users</span>
-                    <p className="text-xs text-gray-500 mt-1">View, edit, ban users</p>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="flex flex-col items-center justify-center h-32"
-                    onClick={() => setActiveTab('groups')}
-                  >
-                    <UsersRound className="h-8 w-8 mb-2" />
-                    <span>Manage Groups</span>
-                    <p className="text-xs text-gray-500 mt-1">View, edit, close groups</p>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    className="flex flex-col items-center justify-center h-32"
-                    onClick={() => setActiveTab('payments')}
-                  >
-                    <CreditCard className="h-8 w-8 mb-2" />
-                    <span>Manage Payments</span>
-                    <p className="text-xs text-gray-500 mt-1">View, refund payments</p>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Activity</CardTitle>
-                <CardDescription>
-                  Latest platform activities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
-                    <div className="flex items-center space-x-3">
-                      <Users className="h-5 w-5 text-blue-600" />
-                      <div>
-                        <p className="font-medium">New user registration</p>
-                        <p className="text-sm text-gray-500">2 minutes ago</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
-                    <div className="flex items-center space-x-3">
-                      <UsersRound className="h-5 w-5 text-green-600" />
-                      <div>
-                        <p className="font-medium">New group created</p>
-                        <p className="text-sm text-gray-500">15 minutes ago</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-gray-50 rounded-lg gap-3">
-                    <div className="flex items-center space-x-3">
-                      <CreditCard className="h-5 w-5 text-purple-600" />
-                      <div>
-                        <p className="font-medium">Payment completed</p>
-                        <p className="text-sm text-gray-500">1 hour ago</p>
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm" className="w-full sm:w-auto">View</Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Suspense fallback={<AdminSectionLoader />}>
+              <AdminOverview stats={stats} setActiveTab={setActiveTab} />
+            </Suspense>
           </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users">
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-                <CardDescription>
-                  Manage all platform users
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <UserManagement />
-              </CardContent>
-            </Card>
+            <Suspense fallback={<AdminSectionLoader />}>
+              <AdminUsersTab />
+            </Suspense>
           </TabsContent>
 
           {/* Groups Tab */}
           <TabsContent value="groups">
-            <Card>
-              <CardHeader>
-                <CardTitle>Group Management</CardTitle>
-                <CardDescription>
-                  Manage all equb groups
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <GroupManagement />
-              </CardContent>
-            </Card>
+            <Suspense fallback={<AdminSectionLoader />}>
+              <AdminGroupsTab />
+            </Suspense>
           </TabsContent>
 
           {/* Payments Tab */}
           <TabsContent value="payments">
-            <Card>
-              <CardHeader>
-                <CardTitle>Payment Monitoring</CardTitle>
-                <CardDescription>
-                  Monitor payments and process refunds
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <PaymentManagement />
-              </CardContent>
-            </Card>
+            <Suspense fallback={<AdminSectionLoader />}>
+              <AdminPaymentsTab />
+            </Suspense>
           </TabsContent>
 
           {/* Audit Logs Tab */}
           <TabsContent value="audit">
-            <Card>
-              <CardHeader>
-                <CardTitle>Audit Logs</CardTitle>
-                <CardDescription>
-                  View all admin actions and system activities
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <AuditLogs />
-              </CardContent>
-            </Card>
+            <Suspense fallback={<AdminSectionLoader />}>
+              <AdminAuditTab />
+            </Suspense>
           </TabsContent>
         </Tabs>
       </main>

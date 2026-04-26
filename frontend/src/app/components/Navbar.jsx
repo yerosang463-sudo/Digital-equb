@@ -1,28 +1,45 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback, memo } from "react";
 import { Link } from "react-router";
 import { Button } from "./ui/button";
 import { Menu, X } from "lucide-react";
 
-export function Navbar({ variant = "default" }) {
+const Navbar = memo(function Navbar({ variant = "default" }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const menuRef = useRef(null);
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+  // Memoize scroll handler to prevent unnecessary re-renders
+  const handleScroll = useCallback(() => {
+    setIsScrolled(window.scrollY > 20);
+  }, []);
+
+  // Memoize click outside handler
+  const handleClickOutside = useCallback((event) => {
+    if (menuRef.current && !menuRef.current.contains(event.target)) {
+      setMobileMenuOpen(false);
+    }
+  }, []);
+
+  // Memoize smooth scroll handler
+  const handleSmoothScroll = useCallback((elementId) => {
+    const element = document.getElementById(elementId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, []);
+
+  // Memoize mobile menu toggle
+  const toggleMobileMenu = useCallback(() => {
+    setMobileMenuOpen(prev => !prev);
   }, []);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMobileMenuOpen(false);
-      }
-    };
+    const handleScrollEvent = () => handleScroll();
+    window.addEventListener("scroll", handleScrollEvent);
+    return () => window.removeEventListener("scroll", handleScrollEvent);
+  }, [handleScroll]);
 
+  useEffect(() => {
     if (mobileMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       document.addEventListener("touchstart", handleClickOutside);
@@ -32,7 +49,7 @@ export function Navbar({ variant = "default" }) {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("touchstart", handleClickOutside);
     };
-  }, [mobileMenuOpen]);
+  }, [mobileMenuOpen, handleClickOutside]);
 
   const isTransparent = variant === "transparent" && !isScrolled;
 
@@ -63,31 +80,19 @@ export function Navbar({ variant = "default" }) {
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
               e.preventDefault();
-              const element = document.getElementById('features');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
+              handleSmoothScroll('features');
             }}>About</a>
             <a href="#how-it-works" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
               e.preventDefault();
-              const element = document.getElementById('how-it-works');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
+              handleSmoothScroll('how-it-works');
             }}>How It Works</a>
             <a href="#pricing" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
               e.preventDefault();
-              const element = document.getElementById('pricing');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
+              handleSmoothScroll('pricing');
             }}>Pricing</a>
             <a href="#contact" className="font-medium hover:text-blue-500 transition-colors" onClick={(e) => {
               e.preventDefault();
-              const element = document.getElementById('contact');
-              if (element) {
-                element.scrollIntoView({ behavior: 'smooth' });
-              }
+              handleSmoothScroll('contact');
             }}>Contact</a>
           </div>
 
@@ -108,8 +113,7 @@ export function Navbar({ variant = "default" }) {
 
           <button
             className="md:hidden p-2"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-            
+            onClick={toggleMobileMenu}>
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
@@ -120,34 +124,22 @@ export function Navbar({ variant = "default" }) {
               <a href="#features" className="font-medium" onClick={(e) => {
                 e.preventDefault();
                 setMobileMenuOpen(false);
-                const element = document.getElementById('features');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth' });
-                }
+                handleSmoothScroll('features');
               }}>About</a>
               <a href="#how-it-works" className="font-medium" onClick={(e) => {
                 e.preventDefault();
                 setMobileMenuOpen(false);
-                const element = document.getElementById('how-it-works');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth' });
-                }
+                handleSmoothScroll('how-it-works');
               }}>How It Works</a>
               <a href="#pricing" className="font-medium" onClick={(e) => {
                 e.preventDefault();
                 setMobileMenuOpen(false);
-                const element = document.getElementById('pricing');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth' });
-                }
+                handleSmoothScroll('pricing');
               }}>Pricing</a>
               <a href="#contact" className="font-medium" onClick={(e) => {
                 e.preventDefault();
                 setMobileMenuOpen(false);
-                const element = document.getElementById('contact');
-                if (element) {
-                  element.scrollIntoView({ behavior: 'smooth' });
-                }
+                handleSmoothScroll('contact');
               }}>Contact</a>
               <div className="flex flex-col gap-2 pt-2">
                 <Link to="/login" className="w-full" onClick={() => setMobileMenuOpen(false)}>
@@ -163,5 +155,10 @@ export function Navbar({ variant = "default" }) {
           </div>
         }
       </div>
-    </nav>);
-}
+    </nav>
+  );
+});
+
+Navbar.displayName = "Navbar";
+
+export { Navbar };

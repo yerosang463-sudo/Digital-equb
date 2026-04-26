@@ -18,18 +18,81 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
+          // Core React libraries
           vendor: ['react', 'react-dom'],
+          
+          // Router
           router: ['react-router'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          admin: ['./src/app/pages/AdminDashboardPage'],
+          
+          // UI libraries - split to reduce initial load
+          ui: [
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+            '@radix-ui/react-popover',
+            '@radix-ui/react-select',
+            '@radix-ui/react-tabs',
+            '@radix-ui/react-slot'
+          ],
+          
+          // Authentication
+          auth: ['@react-oauth/google', 'jwt-decode'],
+          
+          // Admin components - heavy, load only when needed
+          admin: [
+            './src/app/pages/AdminDashboardPage',
+            './src/app/components/admin/UserManagement',
+            './src/app/components/admin/GroupManagement',
+            './src/app/components/admin/PaymentManagement',
+            './src/app/components/admin/AuditLogs'
+          ],
+          
+          // Homepage sections - lazy loaded
+          homepage: [
+            './src/app/components/sections/HeroSection',
+            './src/app/components/sections/FeaturesSection',
+            './src/app/components/sections/HowItWorksSection',
+            './src/app/components/sections/PricingSection',
+            './src/app/components/sections/ContactSection'
+          ],
+          
+          // Dashboard components
+          dashboard: [
+            './src/app/pages/DashboardPage',
+            './src/app/pages/BrowseGroupsPage',
+            './src/app/pages/GroupDetailPage',
+            './src/app/pages/PaymentsPage',
+            './src/app/pages/ProfilePage'
+          ]
         },
       },
     },
     chunkSizeWarningLimit: 1000,
+    // Optimize for production
+    minify: 'terser',
+    sourcemap: false,
   },
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  // Optimize dependencies
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react-router'
+    ],
+    exclude: [
+      // Exclude large dependencies from pre-bundling
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu'
+    ]
+  },
+  // Enable compression for static assets
+  server: {
+    headers: {
+      'Cache-Control': 'public, max-age=31536000',
     },
   },
 });
