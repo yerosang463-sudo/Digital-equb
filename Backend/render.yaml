@@ -25,7 +25,7 @@ services:
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        value: 242581177542-vgr5gqkck30oeje3jt52t1aq4s0664p9.apps.googleusercontent.com
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: EMAIL_USER
