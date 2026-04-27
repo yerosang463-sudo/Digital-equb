@@ -9,7 +9,7 @@ services:
       - key: VITE_API_BASE_URL
         value: https://digital-equb-api.onrender.com
       - key: VITE_GOOGLE_CLIENT_ID
-        value: 640189153673-g3aeovpv6shim22e4r2s5ijr14ffqkpl.apps.googleusercontent.com
+        value: 429331269650-603npcn5lessg06j4se2vbqejmv5tq3g.apps.googleusercontent.com
   - type: web
     name: digital-equb-api
     env: node
