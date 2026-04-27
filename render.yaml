@@ -5,6 +5,11 @@ services:
     rootDir: frontend
     buildCommand: npm run build
     publishPath: dist
+    headers:
+      - source: /*
+        headers:
+          - key: Cache-Control
+            value: no-cache
     envVars:
       - key: VITE_API_BASE_URL
         value: https://digital-equb-api.onrender.com

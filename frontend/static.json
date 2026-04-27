@@ -1,11 +1,4 @@
 {
   "root": ".",
-  "https_only": true,
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index.html",
-      "status": 200
-    }
-  ]
+  "https_only": true
 }
