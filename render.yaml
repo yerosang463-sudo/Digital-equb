@@ -1,10 +1,13 @@
 services:
-  - type: web
+  - type: static
     name: digital-equb-frontend
-    env: node
     rootDir: frontend
     buildCommand: npm install && npm run build
-    startCommand: node server.js
+    staticPublishPath: ./dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: VITE_API_BASE_URL
         value: https://digital-equb-api.onrender.com
