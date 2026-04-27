@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router";
+import { Link, useLocation } from "react-router-dom";
 import { Home, LayoutGrid, CreditCard, UserCircle } from "lucide-react";
 
 const navItems = [

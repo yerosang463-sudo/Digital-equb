@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, LogOut, Search, Shield } from "lucide-react";
-import { useNavigate, Link } from "react-router";
+import { useNavigate, Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Input } from "./ui/input";

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Users, TrendingUp, CreditCard, DollarSign } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { StatsCard } from "../components/StatsCard";
 import { GroupCard } from "../components/GroupCard";
 import { NotificationCard } from "../components/NotificationCard";
