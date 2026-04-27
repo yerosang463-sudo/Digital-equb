@@ -12,7 +12,7 @@ function HeroSection() {
           {/* Left Content */}
           <div className="text-left group-hover:translate-x-2 transition-transform duration-700">
             <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 text-white leading-tight group-hover:scale-105 group-hover:text-yellow-100 transition-all duration-700">
-              Unlock <span className="text-yellow-400 group-hover:text-yellow-300 transition-colors duration-700">Financial</span> Growth Together
+              Modernizing Equb for a Better Financial Future <span className="text-yellow-400 group-hover:text-yellow-300 transition-colors duration-700">⭐</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-blue-100 max-w-xl group-hover:translate-x-1 transition-transform duration-700">
               Traditional Ethiopian savings circle, powered by modern technology. Save together, grow together with Digital Equb.
