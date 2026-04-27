@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
