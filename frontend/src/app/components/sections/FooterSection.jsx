@@ -27,7 +27,6 @@ function FooterSection() {
             <ul className="space-y-1.5 text-sm">
               <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
               <li><Link to="/contact" className="hover:text-white transition-colors">Contact</Link></li>
-              <li><Link to="/support" className="hover:text-white transition-colors">Support</Link></li>
             </ul>
           </div>
           <div>
