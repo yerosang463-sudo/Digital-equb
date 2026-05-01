@@ -571,11 +571,15 @@ const AdminDashboardPage = () => {
 
           <div className="flex justify-between items-center">
 
-            <p className="text-sm text-gray-500">
-
-              Admin Dashboard - Digital Equb Platform
-
-            </p>
+            <div className="flex items-center gap-2">
+              <Link to="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
+                <div className="w-8 h-8 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold">E</span>
+                </div>
+                <span className="text-[#1E3A8A] font-semibold">Digital Equb</span>
+              </Link>
+              <span className="text-sm text-gray-500">- Admin Dashboard</span>
+            </div>
 
             <div className="flex items-center space-x-2">
 
