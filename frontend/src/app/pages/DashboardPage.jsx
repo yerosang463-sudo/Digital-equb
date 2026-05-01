@@ -23,10 +23,10 @@ export function DashboardPage() {
     async function loadDashboard() {
       try {
         const [statsResponse, groupsResponse, paymentsResponse, notificationsResponse] = await Promise.all([
-          apiRequest("/api/dashboard/stats"),
-          apiRequest("/api/groups/my"),
-          apiRequest("/api/payments?status=pending&limit=10"),
-          apiRequest("/api/notifications?limit=5"),
+          apiRequest("/api/dashboard/stats", { skipCache: true }),
+          apiRequest("/api/groups/my", { skipCache: true }),
+          apiRequest("/api/payments?status=pending&limit=10", { skipCache: true }),
+          apiRequest("/api/notifications?limit=5", { skipCache: true }),
         ]);
 
         if (!ignore) {

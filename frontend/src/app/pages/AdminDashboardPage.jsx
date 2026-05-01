@@ -121,79 +121,30 @@ const AdminDashboardPage = () => {
 
 
   const fetchDashboardStats = async () => {
-
     try {
-
       setLoading(true);
-
       setError('');
-
-
-
-      console.log('Fetching admin dashboard stats...');
-
-      
-
-      // Fetch analytics data
-
-      const response = await apiRequest('/api/admin/analytics');
-
-      
-
-      console.log('Analytics response:', response);
-
-      
+      const response = await apiRequest('/api/admin/analytics', { skipCache: true });
 
       if (response.success) {
-
         const data = response.data;
-
-        console.log('Analytics data:', data);
-
-        
-
-        // Extract stats from analytics
-
         setStats({
-
           totalUsers: data.user_stats?.total_users || 0,
-
           activeUsers: data.user_stats?.active_users || 0,
-
           totalGroups: data.group_stats?.total_groups || 0,
-
           activeGroups: data.group_stats?.active_groups || 0,
-
           totalPayments: data.payment_stats?.total_payments || 0,
-
           pendingPayments: data.payment_stats?.pending_payments || 0,
-
           totalRevenue: data.group_stats?.total_contribution_value || 0
-
         });
-
       } else {
-
-        console.error('Analytics request failed:', response.message);
-
         setError(response.message || 'Failed to load dashboard statistics');
-
       }
-
     } catch (err) {
-
-      console.error('Failed to fetch dashboard stats:', err);
-
-      console.error('Error details:', err.message, err.stack);
-
       setError(`Failed to load dashboard statistics: ${err.message}`);
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
 

@@ -86,22 +86,16 @@ export function PaymentsPage() {
 
     setIsProcessing(true);
     try {
-      console.log('Processing Telebirr payment for payment ID:', selectedPayment.id);
-      console.log('Phone number:', phoneNumber);
-      
       const response = await apiRequest(`/api/payments/${selectedPayment.id}/telebirr/simulate`, {
         method: "POST",
         body: { phone: phoneNumber },
       });
 
-      console.log('Payment response:', response);
-      
       setPayments((current) =>
         current.map((payment) => (payment.id === response.payment.id ? response.payment : payment))
       );
       setPaymentSuccess(true);
     } catch (error) {
-      console.error('Payment processing error:', error);
       window.alert(`Payment failed: ${error.message}`);
     } finally {
       setIsProcessing(false);

@@ -26,13 +26,39 @@ export function AuthProvider({ children }) {
 
     async function bootstrap() {
       const storedToken = getStoredToken();
+      const storedUser = getStoredUser();
+      
       if (!storedToken) {
         setLoading(false);
         return;
       }
 
+      // If we have cached user data, use it immediately and refresh in background
+      if (storedUser && !cancelled) {
+        setUser(storedUser);
+        setToken(storedToken);
+        setLoading(false);
+        
+        // Refresh user data in background without blocking UI
+        apiRequest("/api/auth/me", { token: storedToken, skipCache: true })
+          .then(({ user: currentUser }) => {
+            if (!cancelled) {
+              setUser(currentUser);
+              setStoredAuth(storedToken, currentUser);
+            }
+          })
+          .catch(() => {
+            // If refresh fails, keep using cached data
+          });
+        return;
+      }
+
+      // No cached user, fetch from API
       try {
-        const { user: currentUser } = await apiRequest("/api/auth/me", { token: storedToken });
+        const { user: currentUser } = await apiRequest("/api/auth/me", { 
+          token: storedToken,
+          skipCache: true 
+        });
         if (!cancelled) {
           setToken(storedToken);
           setStoredAuth(storedToken, currentUser);
@@ -58,28 +84,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
-    console.log('Attempting login with:', email);
     try {
       const payload = await apiRequest("/api/auth/login", {
         method: "POST",
         body: { email, password },
       });
-      console.log('Login response:', payload);
 
       // Use user data from login response if complete, otherwise fetch full profile
       const completeUser = payload.user || await apiRequest("/api/auth/me", { 
         token: payload.token,
-        skipCache: true // Skip cache for fresh login data
+        skipCache: true
       }).then(res => res.user).catch(() => payload.user);
-      
-      console.log('Complete user data:', completeUser);
 
       setStoredAuth(payload.token, completeUser);
       setToken(payload.token);
       setUser(completeUser);
       return { ...payload, user: completeUser };
     } catch (error) {
-      console.error('Login error:', error);
       throw error;
     }
   }
@@ -103,19 +124,14 @@ export function AuthProvider({ children }) {
 
     setLoading(true);
     try {
-      // 1. Decode the JWT token from Google to get the user profile
-      const { jwtDecode } = await import("jwt-decode");
-      const decoded = jwtDecode(credential);
-      
-      // Send the secure ID Token to our backend for verification
       const payload = await apiRequest("/api/auth/google", {
         method: "POST",
         body: { idToken: credential },
       });
 
-      // After successful login, get complete user profile including roles
-      const { user: completeUser } = await apiRequest("/api/auth/me", { 
-        token: payload.token 
+      const { user: completeUser } = await apiRequest("/api/auth/me", {
+        token: payload.token,
+        skipCache: true
       });
 
       setStoredAuth(payload.token, completeUser);
@@ -123,7 +139,6 @@ export function AuthProvider({ children }) {
       setUser(completeUser);
       return { ...payload, user: completeUser };
     } catch (error) {
-      console.error("Google login failed", error);
       throw error;
     } finally {
       setLoading(false);
