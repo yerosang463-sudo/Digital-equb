@@ -64,15 +64,15 @@ export function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <p className="text-gray-600 mt-1">
           Welcome back, {user?.full_name?.split(" ")[0] || "member"}! Here&apos;s your savings overview.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatsCard
           icon={Users}
           label="Active Groups"
@@ -103,13 +103,13 @@ export function DashboardPage() {
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-semibold text-gray-900">Your Active Groups</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-xl font-semibold text-gray-900">Your Active Groups</h2>
           <Link to="/dashboard/groups">
             <Button variant="outline">Browse All Groups</Button>
           </Link>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {activeGroups.slice(0, 3).map((group) => (
             <GroupCard
               key={group.id}
@@ -128,19 +128,19 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-6">
+      <div className="grid md:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
             <CardTitle>Upcoming Payments</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             {pendingPayments.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No pending payments</p>
             ) : (
               pendingPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
                 >
                   <div>
                     <p className="font-medium">{payment.group_name}</p>

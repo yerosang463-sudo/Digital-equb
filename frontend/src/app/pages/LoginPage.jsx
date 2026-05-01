@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../components/ui/card";
 import { Separator } from "../components/ui/separator";
 import { useAuth } from "../providers/AuthProvider";
+
+// Lazy load GoogleLogin component to improve initial load performance
+const GoogleLogin = lazy(() => import("@react-oauth/google").then(module => ({ default: module.GoogleLogin })));
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -81,15 +83,17 @@ export function LoginPage() {
           {/* Social Logins */}
           <div className="flex justify-center">
             {googleScriptLoaded && !googleError ? (
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                theme="filled_blue"
-                shape="pill"
-                size="large"
-                text="continue_with"
-                width="360"
-              />
+              <Suspense fallback={<div className="w-full max-w-[360px] h-12 bg-gray-700/50 rounded-full animate-pulse" />}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="filled_blue"
+                  shape="pill"
+                  size="large"
+                  text="continue_with"
+                  width="360"
+                />
+              </Suspense>
             ) : (
               <div className="w-full max-w-[360px] text-center">
                 <p className="text-gray-400 text-sm mb-2">Google login unavailable</p>

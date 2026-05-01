@@ -50,14 +50,14 @@ export function TopBar() {
   }
 
   return (
-    <div className="bg-white border-b border-gray-200 px-6 py-4">
+    <div className="bg-white border-b border-gray-200 px-4 py-3">
       <div className="flex items-center justify-between gap-4">
         {/* Mobile Logo */}
         <Link to="/" className="md:hidden flex items-center gap-2 flex-shrink-0">
-          <div className="w-9 h-9 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg">E</span>
+          <div className="w-8 h-8 bg-[#1E3A8A] rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-base">E</span>
           </div>
-          <span className="font-semibold text-gray-900 hidden sm:block">Digital Equb</span>
+          <span className="font-semibold text-gray-900 hidden sm:block text-sm">Digital Equb</span>
         </Link>
 
         <div className="flex-1 max-w-md">

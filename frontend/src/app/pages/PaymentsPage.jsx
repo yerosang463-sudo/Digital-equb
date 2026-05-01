@@ -123,9 +123,9 @@ export function PaymentsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Payments</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
         <p className="text-gray-600 mt-1">
           {requestedGroupId ? "Complete the selected group payment and review its history" : "Manage your contributions and payment history"}
         </p>
@@ -142,19 +142,19 @@ export function PaymentsPage() {
         </CardHeader>
         <CardContent>
           {pendingPayments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <CheckCircle className="w-12 h-12 mx-auto mb-3 text-green-500" />
+            <div className="text-center py-6 text-gray-500">
+              <CheckCircle className="w-10 h-10 mx-auto mb-2 text-green-500" />
               <p>All caught up! No pending payments.</p>
               <p className="text-sm mt-3 text-gray-400 max-w-sm mx-auto">
                 If your group is relatively new and still waiting for members to join, your payment will automatically appear here once Round 1 actually begins.
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {pendingPayments.map((payment) => (
                 <div
                   key={payment.id}
-                  className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg"
+                  className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
                 >
                   <div>
                     <p className="font-semibold text-gray-900">{payment.group_name}</p>
@@ -162,9 +162,9 @@ export function PaymentsPage() {
                       Round {payment.round_number} - Due: {payment.due_date || "Soon"}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <div className="text-right">
-                      <p className="text-2xl font-bold text-[#1E3A8A]">{payment.amount} Birr</p>
+                      <p className="text-xl font-bold text-[#1E3A8A]">{payment.amount} Birr</p>
                     </div>
                     <Button className="bg-[#1E3A8A] hover:bg-[#1E3A8A]/90" onClick={() => handlePayNow(payment)}>
                       <CreditCard className="w-4 h-4 mr-2" />
@@ -230,8 +230,8 @@ export function PaymentsPage() {
           </DialogHeader>
 
           {!paymentSuccess ? (
-            <div className="space-y-6 py-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="space-y-4 py-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <div className="flex justify-between mb-2">
                   <span className="text-gray-600">Group:</span>
                   <span className="font-semibold">{selectedPayment?.group_name}</span>
@@ -277,16 +277,16 @@ export function PaymentsPage() {
                 )}
               </Button>
 
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-2">
                 <p className="text-xs text-gray-600 text-center">
                   Secure payment is simulated through Telebirr for this demo flow.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="py-8 text-center">
-              <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
+            <div className="py-6 text-center">
+              <CheckCircle className="w-12 h-12 text-green-500 mx-auto mb-3" />
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Payment Successful!</h3>
               <p className="text-gray-600 mb-1">
                 Your payment of {selectedPayment?.amount} Birr has been processed.
               </p>

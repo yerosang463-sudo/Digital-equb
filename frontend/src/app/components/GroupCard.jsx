@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Users } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -5,18 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Progress } from "./ui/progress";
 import { Link } from "react-router-dom";
 
-
-
-
-
-
-
-
-
-
-
-
-function ActionArea({ id, isMember, isPublic, display_status, onJoin }) {
+const ActionArea = memo(function ActionArea({ id, isMember, isPublic, display_status, onJoin }) {
   // Public groups and members always get "View Details"
   if (isMember || isPublic) {
     return (
@@ -49,9 +39,9 @@ function ActionArea({ id, isMember, isPublic, display_status, onJoin }) {
       {label}
     </Badge>
   );
-}
+});
 
-export function GroupCard({
+export const GroupCard = memo(function GroupCard({
   id,
   name,
   members,
@@ -110,4 +100,4 @@ export function GroupCard({
       </CardFooter>
     </Card>
   );
-}
+});

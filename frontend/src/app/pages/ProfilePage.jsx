@@ -142,16 +142,16 @@ export function ProfilePage() {
         <p className="text-gray-600 mt-1">Manage your account and preferences</p>
       </div>
 
-      <div className="flex items-center gap-6 p-6 bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] rounded-lg text-white">
-        <Avatar className="w-24 h-24">
-          <AvatarFallback className="bg-white text-[#1E3A8A] text-3xl">
+      <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-[#1E3A8A] to-[#3B82F6] rounded-lg text-white">
+        <Avatar className="w-16 h-16">
+          <AvatarFallback className="bg-white text-[#1E3A8A] text-xl">
             {initials(profile.full_name)}
           </AvatarFallback>
         </Avatar>
         <div>
-          <h2 className="text-2xl font-bold">{profile.full_name}</h2>
-          <p className="text-blue-100">{profile.email}</p>
-          <p className="text-blue-100 text-sm mt-1">
+          <h2 className="text-xl font-bold">{profile.full_name}</h2>
+          <p className="text-blue-100 text-sm">{profile.email}</p>
+          <p className="text-blue-100 text-xs mt-1">
             Member since {profile.created_at ? new Date(profile.created_at).toLocaleDateString() : "-"}
           </p>
         </div>

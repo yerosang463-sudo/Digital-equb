@@ -3,6 +3,9 @@ const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:500
 const TOKEN_KEY = "digital-equb-token";
 const USER_KEY = "digital-equb-user";
 
+const cache = new Map();
+const CACHE_DURATION = 30000; // 30 seconds cache for GET requests
+
 export function getStoredToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -20,10 +23,28 @@ export function setStoredAuth(token, user) {
 export function clearStoredAuth() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
+  cache.clear(); // Clear cache on logout
 }
 
-export async function apiRequest(path, { method = "GET", body, token, headers = {} } = {}) {
+function getCacheKey(path, method, body) {
+  return `${method}:${path}:${body ? JSON.stringify(body) : ''}`;
+}
+
+function isCacheValid(timestamp) {
+  return Date.now() - timestamp < CACHE_DURATION;
+}
+
+export async function apiRequest(path, { method = "GET", body, token, headers = {}, skipCache = false } = {}) {
   const authToken = token ?? getStoredToken();
+  const cacheKey = getCacheKey(path, method, body);
+
+  // Return cached data for GET requests if valid and not skipped
+  if (method === "GET" && !skipCache && cache.has(cacheKey)) {
+    const cached = cache.get(cacheKey);
+    if (isCacheValid(cached.timestamp)) {
+      return cached.data;
+    }
+  }
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     method,
@@ -46,6 +67,14 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
     error.status = response.status;
     error.payload = payload;
     throw error;
+  }
+
+  // Cache successful GET requests
+  if (method === "GET" && response.ok) {
+    cache.set(cacheKey, {
+      data: payload,
+      timestamp: Date.now()
+    });
   }
 
   return payload;

@@ -380,7 +380,7 @@ const AdminDashboardPage = () => {
 
         {/* Stats Overview */}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
 
           <Card>
 
@@ -490,7 +490,7 @@ const AdminDashboardPage = () => {
 
         {/* Navigation Tabs */}
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
 
           <TabsList className="grid grid-cols-5 w-full lg:grid-cols-5 md:grid-cols-3 sm:grid-cols-2 overflow-x-auto">
 
@@ -540,7 +540,7 @@ const AdminDashboardPage = () => {
 
           {/* Overview Tab */}
 
-          <TabsContent value="overview" className="space-y-6">
+          <TabsContent value="overview" className="space-y-4">
 
             <Suspense fallback={<AdminSectionLoader />}>
 

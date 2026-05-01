@@ -1,15 +1,7 @@
-
+import { memo } from "react";
 import { Card, CardContent } from "./ui/card";
 
-
-
-
-
-
-
-
-
-export function StatsCard({ icon: Icon, label, value, change, iconColor = "bg-blue-100 text-blue-600" }) {
+export const StatsCard = memo(function StatsCard({ icon: Icon, label, value, change, iconColor = "bg-blue-100 text-blue-600" }) {
   return (
     <Card>
       <CardContent className="p-6">
@@ -27,5 +19,4 @@ export function StatsCard({ icon: Icon, label, value, change, iconColor = "bg-bl
         </div>
       </CardContent>
     </Card>);
-
-}
+});

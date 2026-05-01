@@ -66,10 +66,12 @@ export function AuthProvider({ children }) {
       });
       console.log('Login response:', payload);
 
-      // After successful login, get complete user profile including roles
-      const { user: completeUser } = await apiRequest("/api/auth/me", { 
-        token: payload.token 
-      });
+      // Use user data from login response if complete, otherwise fetch full profile
+      const completeUser = payload.user || await apiRequest("/api/auth/me", { 
+        token: payload.token,
+        skipCache: true // Skip cache for fresh login data
+      }).then(res => res.user).catch(() => payload.user);
+      
       console.log('Complete user data:', completeUser);
 
       setStoredAuth(payload.token, completeUser);
