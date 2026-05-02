@@ -1,6 +1,9 @@
 const mysql = require('mysql2/promise');
 require('./env');
 
+// Determine if we're using TiDB (check if host contains 'tidbcloud.com')
+const isTiDB = process.env.DB_HOST && process.env.DB_HOST.includes('tidbcloud.com');
+
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT) || 3306,
@@ -11,10 +14,11 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0,
   timezone: '+00:00',
-  ssl: {
-    rejectUnauthorized: false,
-    minTLSVersion: 'TLSv1.2'
-  }
+  // Enable SSL for TiDB Cloud (required for secure connections)
+  ssl: isTiDB ? {
+    minVersion: 'TLSv1.2',
+    rejectUnauthorized: true
+  } : undefined
 });
 
 async function testConnection() {
