@@ -1,5 +1,3 @@
-USE `sql12824412`;
-
 -- Step 1: Create/update the admin user with correct password
 -- Password @yero27101620 hashed with bcrypt
 INSERT INTO users (id, full_name, email, password_hash, is_active) 

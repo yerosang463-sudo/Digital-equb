@@ -1,4 +1,8 @@
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const configuredApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
+const API_BASE_URL = (
+  configuredApiUrl ||
+  (import.meta.env.DEV ? "http://localhost:5000" : "https://digital-equb-api.onrender.com")
+).replace(/\/$/, "");
 
 const TOKEN_KEY = "digital-equb-token";
 const USER_KEY = "digital-equb-user";
@@ -7,15 +11,30 @@ const cache = new Map();
 const CACHE_DURATION = 30000; // 30 seconds cache for GET requests
 
 export function getStoredToken() {
-  return localStorage.getItem(TOKEN_KEY);
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token || token === "null" || token === "undefined") {
+    return null;
+  }
+
+  return token;
 }
 
 export function getStoredUser() {
   const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    clearStoredAuth();
+    return null;
+  }
 }
 
 export function setStoredAuth(token, user) {
+  cache.clear();
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
@@ -26,8 +45,8 @@ export function clearStoredAuth() {
   cache.clear(); // Clear cache on logout
 }
 
-function getCacheKey(path, method, body) {
-  return `${method}:${path}:${body ? JSON.stringify(body) : ''}`;
+function getCacheKey(path, method, body, token) {
+  return `${method}:${path}:${token || "anonymous"}:${body ? JSON.stringify(body) : ''}`;
 }
 
 function isCacheValid(timestamp) {
@@ -36,7 +55,7 @@ function isCacheValid(timestamp) {
 
 export async function apiRequest(path, { method = "GET", body, token, headers = {}, skipCache = false } = {}) {
   const authToken = token ?? getStoredToken();
-  const cacheKey = getCacheKey(path, method, body);
+  const cacheKey = getCacheKey(path, method, body, authToken);
 
   // Return cached data for GET requests if valid and not skipped
   if (method === "GET" && !skipCache && cache.has(cacheKey)) {
@@ -66,6 +85,11 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
     const error = new Error(message);
     error.status = response.status;
     error.payload = payload;
+
+    if (response.status === 401 && !path.startsWith("/api/auth/login") && !path.startsWith("/api/auth/register")) {
+      clearStoredAuth();
+    }
+
     throw error;
   }
 

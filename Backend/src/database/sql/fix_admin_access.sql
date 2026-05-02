@@ -1,5 +1,3 @@
-USE `sql12824412`;
-
 -- First, check what user ID your email has
 SELECT id, email, full_name FROM users WHERE email = 'yerosang463@gmail.com';
 

@@ -1,8 +1,5 @@
 -- Digital Equb Database Schema
--- Database: digital_equb
--- User: 2BRQf59wBsyjd1Y.root
-
-USE `digital_equb`;
+-- Database is selected by DB_NAME in the backend connection.
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
@@ -12,6 +9,9 @@ CREATE TABLE IF NOT EXISTS users (
   phone VARCHAR(20),
   password_hash VARCHAR(255) NOT NULL,
   avatar_url VARCHAR(500),
+  google_id VARCHAR(255),
+  auth_provider VARCHAR(30) NOT NULL DEFAULT 'local',
+  email_verified TINYINT(1) DEFAULT 0,
   bio TEXT,
   notify_payment_reminders TINYINT(1) DEFAULT 1,
   notify_winner_announcements TINYINT(1) DEFAULT 1,
@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS users (
   is_active TINYINT(1) DEFAULT 1,
   created_at DATETIME DEFAULT NULL,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  INDEX idx_email (email)
+  INDEX idx_email (email),
+  UNIQUE KEY unique_google_id (google_id)
 );
 
 -- Equb groups table

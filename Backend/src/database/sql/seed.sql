@@ -1,6 +1,5 @@
 -- Seed data for Digital Equb
 -- Testing Sample: 4 members, 4 completed rounds, full history
-USE `digital_equb`;
 
 SET FOREIGN_KEY_CHECKS = 0;
 -- Delete existing data - ignore errors if tables don't exist

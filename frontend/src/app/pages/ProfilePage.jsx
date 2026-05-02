@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { User, Lock, Bell } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -19,7 +20,8 @@ function initials(name) {
 }
 
 export function ProfilePage() {
-  const { setUser } = useAuth();
+  const navigate = useNavigate();
+  const { setUser, logout } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -51,6 +53,12 @@ export function ProfilePage() {
         }
       } catch (error) {
         if (!ignore) {
+          if (error.status === 401 || error.status === 403) {
+            logout();
+            navigate("/login", { replace: true });
+            return;
+          }
+
           window.alert(error.message);
         }
       } finally {

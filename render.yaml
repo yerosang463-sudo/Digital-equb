@@ -1,6 +1,6 @@
 services:
   - type: static
-    name: digital-equb-frontend
+    name: digitaequb
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
@@ -9,18 +9,50 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      - key: VITE_API_URL
+        value: https://digital-equb-api.onrender.com
       - key: VITE_API_BASE_URL
         value: https://digital-equb-api.onrender.com
+      - key: VITE_GOOGLE_CLIENT_ID
+        sync: false
+
   - type: web
     name: digital-equb-api
     env: node
     rootDir: backend
     buildCommand: npm install
-    startCommand: node src/index.js
+    startCommand: npm start
+    plan: free
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: RUN_SEED_DATA
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://digitaequb.onrender.com
+      - key: CORS_ORIGINS
+        value: https://digitaequb.onrender.com
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 4000
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
       - key: EMAIL_USER
-        value: yerosang463@gmail.com
+        sync: false
       - key: EMAIL_PASS
-        value: xgyb rmcz hcqr jixr
+        sync: false
       - key: ADMIN_EMAIL
-        value: yerosang463@gmail.com
+        sync: false

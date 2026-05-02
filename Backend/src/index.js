@@ -20,12 +20,35 @@ const adminRoutes = require('./routes/admin');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const defaultCorsOrigins = [
+  'https://digitaequb.onrender.com',
+  'https://digital-equb-frontend.onrender.com',
+  'https://digital-equb-2.onrender.com',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
+const envCorsOrigins = [
+  process.env.FRONTEND_URL,
+  ...(process.env.CORS_ORIGINS || '').split(','),
+]
+  .map((origin) => (origin || '').trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...envCorsOrigins, ...defaultCorsOrigins])];
+
 app.use(cors({
-  origin: ['https://digitaequb.onrender.com', 'https://digital-equb-2.onrender.com', 'http://localhost:3000', 'http://localhost:5173'],
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(null, false);
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  exposedHeaders: ['Set-Cookie']
+  optionsSuccessStatus: 204,
 }));
 
 app.use(express.json());

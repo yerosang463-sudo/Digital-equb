@@ -1,5 +1,3 @@
-USE `sql12824412`;
-
 -- Get your user ID
 SELECT id, email FROM users WHERE email = 'yerosang463@gmail.com';
 

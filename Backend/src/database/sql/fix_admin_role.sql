@@ -1,5 +1,3 @@
-USE `sql12824412`;
-
 -- Find the user id for yerosang463@gmail.com and assign admin role
 -- This script will assign the admin role to the user with this email
 

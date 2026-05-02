@@ -14,11 +14,23 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => getStoredUser());
   const [loading, setLoading] = useState(Boolean(getStoredToken()));
 
+  function updateAuth(nextToken, nextUser) {
+    setStoredAuth(nextToken, nextUser);
+    setToken(nextToken);
+    setUser(nextUser);
+  }
+
   function updateUser(nextUser) {
     setUser(nextUser);
     if (token) {
       setStoredAuth(token, nextUser);
     }
+  }
+
+  function clearSession() {
+    clearStoredAuth();
+    setUser(null);
+    setToken(null);
   }
 
   useEffect(() => {
@@ -43,12 +55,13 @@ export function AuthProvider({ children }) {
         apiRequest("/api/auth/me", { token: storedToken, skipCache: true })
           .then(({ user: currentUser }) => {
             if (!cancelled) {
-              setUser(currentUser);
-              setStoredAuth(storedToken, currentUser);
+              updateAuth(storedToken, currentUser);
             }
           })
-          .catch(() => {
-            // If refresh fails, keep using cached data
+          .catch((error) => {
+            if (!cancelled && (error.status === 401 || error.status === 403)) {
+              clearSession();
+            }
           });
         return;
       }
@@ -60,15 +73,11 @@ export function AuthProvider({ children }) {
           skipCache: true 
         });
         if (!cancelled) {
-          setToken(storedToken);
-          setStoredAuth(storedToken, currentUser);
-          setUser(currentUser);
+          updateAuth(storedToken, currentUser);
         }
       } catch (error) {
         if (!cancelled) {
-          clearStoredAuth();
-          setUser(null);
-          setToken(null);
+          clearSession();
         }
       } finally {
         if (!cancelled) {
@@ -84,25 +93,18 @@ export function AuthProvider({ children }) {
   }, []);
 
   async function login(email, password) {
-    try {
-      const payload = await apiRequest("/api/auth/login", {
-        method: "POST",
-        body: { email, password },
-      });
+    const payload = await apiRequest("/api/auth/login", {
+      method: "POST",
+      body: { email, password },
+    });
 
-      // Use user data from login response if complete, otherwise fetch full profile
-      const completeUser = payload.user || await apiRequest("/api/auth/me", { 
-        token: payload.token,
-        skipCache: true
-      }).then(res => res.user).catch(() => payload.user);
+    const { user: completeUser } = await apiRequest("/api/auth/me", {
+      token: payload.token,
+      skipCache: true,
+    });
 
-      setStoredAuth(payload.token, completeUser);
-      setToken(payload.token);
-      setUser(completeUser);
-      return { ...payload, user: completeUser };
-    } catch (error) {
-      throw error;
-    }
+    updateAuth(payload.token, completeUser);
+    return { ...payload, user: completeUser };
   }
 
   async function signup(formData) {
@@ -111,10 +113,13 @@ export function AuthProvider({ children }) {
       body: formData,
     });
 
-    setStoredAuth(payload.token, payload.user);
-    setToken(payload.token);
-    setUser(payload.user);
-    return payload;
+    const { user: completeUser } = await apiRequest("/api/auth/me", {
+      token: payload.token,
+      skipCache: true,
+    });
+
+    updateAuth(payload.token, completeUser);
+    return { ...payload, user: completeUser };
   }
 
   async function loginWithGoogle(credential) {
@@ -126,7 +131,7 @@ export function AuthProvider({ children }) {
     try {
       const payload = await apiRequest("/api/auth/google", {
         method: "POST",
-        body: { idToken: credential },
+        body: { credential },
       });
 
       const { user: completeUser } = await apiRequest("/api/auth/me", {
@@ -134,9 +139,7 @@ export function AuthProvider({ children }) {
         skipCache: true
       });
 
-      setStoredAuth(payload.token, completeUser);
-      setToken(payload.token);
-      setUser(completeUser);
+      updateAuth(payload.token, completeUser);
       return { ...payload, user: completeUser };
     } catch (error) {
       throw error;
@@ -152,9 +155,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
-    clearStoredAuth();
-    setToken(null);
-    setUser(null);
+    clearSession();
   }
 
   const value = useMemo(

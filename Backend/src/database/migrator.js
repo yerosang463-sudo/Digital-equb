@@ -17,9 +17,11 @@ class DatabaseMigrator {
       // Define migration files in order (your existing files)
       const migrationFiles = [
         'schema.sql',        // Creates all tables
-        'seed.sql',          // Initial data
+        ...(process.env.NODE_ENV === 'production' && process.env.RUN_SEED_DATA !== 'true'
+          ? []
+          : ['seed.sql']),   // Destructive sample data; never run in production unless explicit
         'migration_v2.sql',  // Version 2 changes
-        'migration_v3.sql',  // Version 3 changes  
+        'migration_v3.sql',  // Version 3 changes
         'migration_v4.sql',  // Version 4 changes
         'migration_v5.sql'   // Version 5 changes (RBAC system)
       ];
@@ -102,11 +104,7 @@ class DatabaseMigrator {
       // Read SQL file
       const sql = fs.readFileSync(sqlPath, 'utf8');
       
-      // Split into individual statements (handle multi-statement files)
-      const statements = sql
-        .split(';')
-        .map(stmt => stmt.trim())
-        .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'));
+      const statements = this.parseSqlStatements(sql);
       
       // Get a connection for executing statements
       const connection = await pool.getConnection();
@@ -153,6 +151,19 @@ class DatabaseMigrator {
       throw error;
     }
   }
+
+  static parseSqlStatements(sql) {
+    const withoutComments = sql
+      .split(/\r?\n/)
+      .map((line) => line.replace(/--.*$/, ''))
+      .join('\n');
+
+    return withoutComments
+      .split(';')
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0)
+      .filter((stmt) => !/^USE\s+/i.test(stmt));
+  }
   
   /**
    * Force re-run a migration file even if it was already executed
@@ -197,7 +208,12 @@ class DatabaseMigrator {
   static async isDatabaseReady() {
     try {
       const executed = await this.getExecutedMigrations();
-      const requiredMigrations = ['schema.sql', 'seed.sql'];
+      const requiredMigrations = [
+        'schema.sql',
+        ...(process.env.NODE_ENV === 'production' && process.env.RUN_SEED_DATA !== 'true'
+          ? []
+          : ['seed.sql']),
+      ];
       
       return requiredMigrations.every(required => 
         executed.some(exec => exec.filename === required)

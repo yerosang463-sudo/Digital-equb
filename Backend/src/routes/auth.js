@@ -1,11 +1,26 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const { body, validationResult } = require('express-validator');
 const { pool } = require('../config/db');
 const { authenticate } = require('../middleware/auth');
+const { getGoogleClientIds, signAuthToken } = require('../utils/authTokens');
 require('../config/env');
+
+const SAFE_USER_FIELDS = `
+  id, full_name, email, phone, avatar_url, bio, auth_provider, email_verified, created_at
+`;
+
+function removePassword(user) {
+  if (!user) {
+    return user;
+  }
+
+  const { password_hash, ...safeUser } = user;
+  return safeUser;
+}
 
 // POST /api/auth/register
 router.post(
@@ -32,17 +47,17 @@ router.post(
 
       const password_hash = await bcrypt.hash(password, 10);
       const [result] = await pool.query(
-        'INSERT INTO users (full_name, email, phone, password_hash) VALUES (?, ?, ?, ?)',
+        `INSERT INTO users
+          (full_name, email, phone, password_hash, auth_provider, email_verified, created_at)
+         VALUES (?, ?, ?, ?, 'local', 0, NOW())`,
         [full_name, email, phone || null, password_hash]
       );
 
       const userId = result.insertId;
-      const token = jwt.sign({ id: userId, email }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      });
+      const token = signAuthToken({ id: userId, email });
 
       const [rows] = await pool.query(
-        'SELECT id, full_name, email, phone, avatar_url, bio, created_at FROM users WHERE id = ?',
+        `SELECT ${SAFE_USER_FIELDS} FROM users WHERE id = ?`,
         [userId]
       );
 
@@ -80,16 +95,20 @@ router.post(
       }
 
       const user = rows[0];
+      if (!user.password_hash || user.auth_provider === 'google') {
+        return res.status(401).json({
+          success: false,
+          message: 'This account uses Google sign-in. Please continue with Google.',
+        });
+      }
+
       const isMatch = await bcrypt.compare(password, user.password_hash);
       if (!isMatch) {
         return res.status(401).json({ success: false, message: 'Invalid email or password' });
       }
 
-      const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      });
-
-      const { password_hash, ...safeUser } = user;
+      const token = signAuthToken(user);
+      const safeUser = removePassword(user);
 
       res.json({
         success: true,
@@ -104,81 +123,122 @@ router.post(
 );
 
 // POST /api/auth/google
-router.post(
-  '/google',
-  [
-    body('idToken').notEmpty().withMessage('ID Token is required'),
-  ],
-  async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
+router.post('/google', async (req, res, next) => {
+  const idToken = req.body?.credential || req.body?.idToken;
 
-    const { idToken } = req.body;
-
-    try {
-      const { OAuth2Client } = require('google-auth-library');
-      const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
-
-      // 1. Verify the Google Token
-      const ticket = await client.verifyIdToken({
-        idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
-      });
-      
-      const payload = ticket.getPayload();
-      const { email, name, picture, sub: google_id } = payload;
-
-      // 2. Check if user already exists
-      let [rows] = await pool.query('SELECT * FROM users WHERE email = ? AND is_active = 1', [email]);
-      let user;
-
-      if (rows.length === 0) {
-        // 3. Create fresh account
-        const [result] = await pool.query(
-          'INSERT INTO users (full_name, email, avatar_url) VALUES (?, ?, ?)',
-          [name, email, picture || null]
-        );
-        const userId = result.insertId;
-        const [newRows] = await pool.query(
-          'SELECT id, full_name, email, phone, avatar_url, bio, created_at FROM users WHERE id = ?',
-          [userId]
-        );
-        user = newRows[0];
-      } else {
-        // 4. Update existing account avatar if changed
-        user = rows[0];
-        if (picture && user.avatar_url !== picture) {
-          await pool.query('UPDATE users SET avatar_url = ? WHERE id = ?', [picture, user.id]);
-          user.avatar_url = picture;
-        }
-      }
-
-      const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      });
-
-      const { password_hash, ...safeUser } = user;
-
-      res.json({
-        success: true,
-        message: rows.length === 0 ? 'Account created via Google' : 'Login successful',
-        token,
-        user: safeUser,
-      });
-    } catch (err) {
-      console.error('Google verification error:', err);
-      res.status(401).json({ success: false, message: 'Invalid Google token' });
-    }
+  if (!idToken || typeof idToken !== 'string') {
+    return res.status(400).json({
+      success: false,
+      message: 'Google credential token is required',
+    });
   }
-);
+
+  const googleClientIds = getGoogleClientIds();
+  if (googleClientIds.length === 0) {
+    return res.status(500).json({
+      success: false,
+      message: 'Google OAuth is not configured on the server',
+    });
+  }
+
+  try {
+    const client = new OAuth2Client(googleClientIds[0]);
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: googleClientIds,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email || payload.email_verified !== true) {
+      return res.status(401).json({
+        success: false,
+        message: 'Google account email is not verified',
+      });
+    }
+
+    const {
+      email,
+      name,
+      picture,
+      sub: googleId,
+    } = payload;
+
+    let [rows] = await pool.query(
+      `SELECT *
+       FROM users
+       WHERE (google_id = ? OR email = ?) AND is_active = 1
+       ORDER BY (google_id = ?) DESC
+       LIMIT 1`,
+      [googleId, email, googleId]
+    );
+
+    const createdAccount = rows.length === 0;
+    let user;
+
+    if (createdAccount) {
+      const unusablePasswordHash = await bcrypt.hash(
+        crypto.randomBytes(32).toString('hex'),
+        10
+      );
+
+      const [result] = await pool.query(
+        `INSERT INTO users
+          (full_name, email, password_hash, avatar_url, google_id, auth_provider, email_verified, created_at)
+         VALUES (?, ?, ?, ?, ?, 'google', 1, NOW())`,
+        [name || email, email, unusablePasswordHash, picture || null, googleId]
+      );
+
+      const [newRows] = await pool.query(
+        `SELECT ${SAFE_USER_FIELDS} FROM users WHERE id = ?`,
+        [result.insertId]
+      );
+      user = newRows[0];
+    } else {
+      user = rows[0];
+
+      await pool.query(
+        `UPDATE users
+         SET avatar_url = COALESCE(?, avatar_url),
+             google_id = COALESCE(google_id, ?),
+             email_verified = 1
+         WHERE id = ?`,
+        [picture || null, googleId, user.id]
+      );
+
+      const [updatedRows] = await pool.query(
+        `SELECT ${SAFE_USER_FIELDS} FROM users WHERE id = ?`,
+        [user.id]
+      );
+      user = updatedRows[0];
+    }
+
+    const token = signAuthToken(user);
+
+    res.json({
+      success: true,
+      message: createdAccount ? 'Account created via Google' : 'Login successful',
+      token,
+      user: removePassword(user),
+    });
+  } catch (err) {
+    console.error('Google verification error:', err.message);
+    if (err.message === 'JWT_SECRET is not configured') {
+      return next(Object.assign(err, { status: 500 }));
+    }
+
+    if (err.code || err.errno || err.sqlMessage) {
+      return next(err);
+    }
+
+    return res.status(401).json({ success: false, message: 'Invalid Google token' });
+  }
+});
 
 // GET /api/auth/me
 router.get('/me', authenticate, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
-      'SELECT id, full_name, email, phone, avatar_url, bio, created_at FROM users WHERE id = ? AND is_active = 1',
+      `SELECT ${SAFE_USER_FIELDS} FROM users WHERE id = ? AND is_active = 1`,
       [req.user.id]
     );
 
@@ -186,43 +246,11 @@ router.get('/me', authenticate, async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Get user roles and permissions
-    const [roleRows] = await pool.execute(`
-      SELECT 
-        r.name as role_name,
-        r.permissions as role_permissions
-      FROM user_roles ur
-      JOIN roles r ON ur.role_id = r.id
-      WHERE ur.user_id = ?
-    `, [req.user.id]);
-    
-    // Extract roles and aggregate permissions
-    const roles = roleRows.map(row => row.role_name);
-    const permissions = [];
-    
-    // Aggregate permissions from all roles
-    roleRows.forEach(row => {
-      try {
-        const rolePermissions = typeof row.role_permissions === 'string'
-          ? JSON.parse(row.role_permissions)
-          : row.role_permissions;
-        if (Array.isArray(rolePermissions)) {
-          permissions.push(...rolePermissions);
-        }
-      } catch (e) {
-        console.error('Error parsing permissions JSON:', e);
-      }
-    });
-    
-    // Remove duplicate permissions
-    const uniquePermissions = [...new Set(permissions)];
-    
-    // Combine user data with roles and permissions
     const userData = {
       ...rows[0],
-      roles,
-      permissions: uniquePermissions,
-      isAdmin: roles.includes('admin')
+      roles: req.user.roles || [],
+      permissions: req.user.permissions || [],
+      isAdmin: Boolean(req.user.isAdmin),
     };
 
     res.json({ success: true, user: userData });

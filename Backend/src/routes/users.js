@@ -10,6 +10,7 @@ router.get('/profile', authenticate, async (req, res, next) => {
   try {
     const [rows] = await pool.query(
       `SELECT u.id, u.full_name, u.email, u.phone, u.avatar_url, u.bio, u.created_at,
+        u.auth_provider, u.email_verified,
         u.notify_payment_reminders, u.notify_winner_announcements, u.notify_new_member_alerts, u.notify_email_updates,
         (SELECT COUNT(*) FROM group_members gm WHERE gm.user_id = u.id) AS groups_count,
         (SELECT COUNT(*) FROM payments p WHERE p.payer_id = u.id AND p.status = 'completed') AS completed_payments
@@ -75,6 +76,7 @@ router.put(
 
       const [rows] = await pool.query(
         `SELECT id, full_name, email, phone, avatar_url, bio, created_at,
+          auth_provider, email_verified,
           notify_payment_reminders, notify_winner_announcements, notify_new_member_alerts, notify_email_updates
          FROM users WHERE id = ?`,
         [req.user.id]
@@ -161,9 +163,19 @@ router.put(
     const { current_password, new_password } = req.body;
 
     try {
-      const [rows] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.user.id]);
+      const [rows] = await pool.query(
+        'SELECT password_hash, auth_provider FROM users WHERE id = ?',
+        [req.user.id]
+      );
       if (rows.length === 0) {
         return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      if (rows[0].auth_provider === 'google') {
+        return res.status(400).json({
+          success: false,
+          message: 'This account uses Google sign-in and does not have a password to change',
+        });
       }
 
       const isMatch = await bcrypt.compare(current_password, rows[0].password_hash);

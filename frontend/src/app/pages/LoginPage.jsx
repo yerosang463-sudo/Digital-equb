@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -10,6 +10,8 @@ import { useAuth } from "../providers/AuthProvider";
 // Import GoogleLogin directly to avoid multiple initialization issues
 import { GoogleLogin } from "@react-oauth/google";
 
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+
 export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -18,7 +20,7 @@ export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(true);
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(Boolean(GOOGLE_CLIENT_ID));
   const [googleError, setGoogleError] = useState(false);
 
   if (isAuthenticated) {
@@ -32,6 +34,10 @@ export function LoginPage() {
 
   async function handleGoogleSuccess(response) {
     try {
+      if (!response?.credential) {
+        throw new Error("No Google credential returned");
+      }
+
       await loginWithGoogle(response.credential);
       navigate(location.state?.from || "/dashboard");
     } catch (error) {

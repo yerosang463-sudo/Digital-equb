@@ -8,6 +8,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "../components/ui/separator";
 import { useAuth } from "../providers/AuthProvider";
 
+const GOOGLE_CLIENT_ID = (import.meta.env.VITE_GOOGLE_CLIENT_ID || "").trim();
+
 export function SignupPage() {
   const navigate = useNavigate();
   const { signup, loginWithGoogle, isAuthenticated } = useAuth();
@@ -19,7 +21,7 @@ export function SignupPage() {
     confirmPassword: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(true);
+  const [googleScriptLoaded, setGoogleScriptLoaded] = useState(Boolean(GOOGLE_CLIENT_ID));
   const [googleError, setGoogleError] = useState(false);
 
   function handleChange(event) {
@@ -28,6 +30,10 @@ export function SignupPage() {
 
   async function handleGoogleSuccess(response) {
     try {
+      if (!response?.credential) {
+        throw new Error("No Google credential returned");
+      }
+
       await loginWithGoogle(response.credential);
       navigate("/dashboard");
     } catch (error) {

@@ -23,7 +23,7 @@ class ErrorBoundary extends Component {
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h1>
             <p className="text-gray-600 mb-4">An error occurred while loading this page.</p>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div className="bg-red-50 p-4 rounded-lg mb-4 text-left">
                 <p className="font-semibold text-red-900 mb-2">Error Details:</p>
                 <p className="text-red-800 text-sm break-all">{this.state.error.toString()}</p>

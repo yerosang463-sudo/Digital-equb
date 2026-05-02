@@ -1,5 +1,3 @@
-USE `sql12824412`;
-
 -- Check if your user exists and what ID it has
 SELECT id, email, full_name FROM users WHERE email = 'yerosang463@gmail.com';
 

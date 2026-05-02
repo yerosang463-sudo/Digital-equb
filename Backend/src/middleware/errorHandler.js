@@ -1,5 +1,7 @@
 const errorHandler = (err, req, res, next) => {
   console.error(err.stack);
+  const status = err.status || 500;
+  const isProduction = process.env.NODE_ENV === 'production';
 
   if (err.code === 'ER_DUP_ENTRY') {
     return res.status(409).json({
@@ -15,9 +17,11 @@ const errorHandler = (err, req, res, next) => {
     });
   }
 
-  res.status(err.status || 500).json({
+  res.status(status).json({
     success: false,
-    message: err.message || 'Internal server error',
+    message: status >= 500 && isProduction
+      ? 'Internal server error'
+      : err.message || 'Internal server error',
   });
 };
 

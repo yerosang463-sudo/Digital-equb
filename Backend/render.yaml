@@ -5,28 +5,33 @@ services:
     rootDir: backend
     buildCommand: npm install
     startCommand: npm start
+    plan: free
     envVars:
-      - key: PORT
-        value: 5000
       - key: NODE_ENV
         value: production
-      - key: DB_HOST
-        value: sql12.freesqldatabase.com
-      - key: DB_PORT
-        value: 3306
-      - key: DB_USER
-        value: sql12824412
-      - key: DB_PASSWORD
-        value: buUvLxRXXv
-      - key: DB_NAME
-        value: sql12824412
+      - key: RUN_SEED_DATA
+        value: "false"
+      - key: FRONTEND_URL
+        value: https://digitaequb.onrender.com
+      - key: CORS_ORIGINS
+        value: https://digitaequb.onrender.com
       - key: JWT_SECRET
-        value: digital-equb-jwt-secret-key-2024
+        sync: false
       - key: JWT_EXPIRES_IN
         value: 7d
       - key: GOOGLE_CLIENT_ID
-        value: 640189153673-g3aeovpv6shim22e4r2s5ijr14ffqkpl.apps.googleusercontent.com
+        sync: false
       - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 4000
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
         sync: false
       - key: EMAIL_USER
         sync: false
@@ -34,4 +39,3 @@ services:
         sync: false
       - key: ADMIN_EMAIL
         sync: false
-    plan: free

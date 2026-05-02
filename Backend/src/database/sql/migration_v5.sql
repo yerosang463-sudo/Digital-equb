@@ -2,12 +2,6 @@
 
 -- Roles, user_roles, and admin_actions tables for role-based access control
 
-
-
-USE `sql12824412`;
-
-
-
 -- Roles table
 
 CREATE TABLE IF NOT EXISTS roles (
@@ -98,4 +92,7 @@ CREATE TABLE IF NOT EXISTS admin_actions (
 
 INSERT INTO roles (name, description, permissions) VALUES
 
-('admin', 'Full platform administrator with complete access to all features and data', '["users.view", "users.edit", "users.delete", "users.ban", "groups.view", "groups.edit", "groups.delete", "groups.force_close", "payments.view", "payments.edit", "payments.refund", "payouts.view", "payouts.edit", "analytics.view", "roles.assign", "roles.revoke", "system.manage"]');
+('admin', 'Full platform administrator with complete access to all features and data', '["users.view", "users.edit", "users.delete", "users.ban", "groups.view", "groups.edit", "groups.delete", "groups.force_close", "payments.view", "payments.edit", "payments.refund", "payouts.view", "payouts.edit", "analytics.view", "roles.assign", "roles.revoke", "system.manage"]')
+ON DUPLICATE KEY UPDATE
+  description = VALUES(description),
+  permissions = VALUES(permissions);

@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
+import { API_BASE_URL } from "../../lib/api";
 
 function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,7 +19,6 @@ function ContactSection() {
     
     setIsSubmitting(true);
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://digital-equb-api.onrender.com';
       const response = await fetch(`${API_BASE_URL}/api/contact`, {
         method: 'POST',
         headers: {

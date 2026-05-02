@@ -1,5 +1,3 @@
-USE `digital_equb`;
-
 -- Migration v2: All columns already exist in schema.sql
 -- This migration is now redundant and only contains the UPDATE statement
 

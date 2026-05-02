@@ -1,19 +1,21 @@
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+const { getJwtSecret } = require('../utils/authTokens');
 require('../config/env');
 
-const authenticate = async (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+function getBearerToken(req) {
+  const authHeader = req.get('authorization') || '';
+  const [scheme, token] = authHeader.trim().split(/\s+/);
 
-  if (!token) {
-    return res.status(401).json({ success: false, message: 'Access token required' });
+  if (scheme !== 'Bearer' || !token) {
+    return null;
   }
 
+  return token;
+}
+
+async function getRolesAndPermissions(userId) {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    
-    // Fetch user roles and permissions from database
     const [rows] = await pool.execute(`
       SELECT 
         r.name as role_name,
@@ -21,14 +23,12 @@ const authenticate = async (req, res, next) => {
       FROM user_roles ur
       JOIN roles r ON ur.role_id = r.id
       WHERE ur.user_id = ?
-    `, [decoded.id]);
-    
-    // Extract roles and aggregate permissions
-    const roles = rows.map(row => row.role_name);
+    `, [userId]);
+
+    const roles = rows.map((row) => row.role_name);
     const permissions = [];
-    
-    // Aggregate permissions from all roles
-    rows.forEach(row => {
+
+    rows.forEach((row) => {
       try {
         const rolePermissions = typeof row.role_permissions === 'string'
           ? JSON.parse(row.role_permissions)
@@ -36,27 +36,79 @@ const authenticate = async (req, res, next) => {
         if (Array.isArray(rolePermissions)) {
           permissions.push(...rolePermissions);
         }
-      } catch (e) {
-        console.error('Error parsing permissions JSON:', e);
+      } catch (error) {
+        console.error('Error parsing permissions JSON:', error);
       }
     });
-    
-    // Remove duplicate permissions
-    const uniquePermissions = [...new Set(permissions)];
-    
-    // Add roles and permissions to user object
+
+    return {
+      roles,
+      permissions: [...new Set(permissions)],
+    };
+  } catch (error) {
+    if (error.code === 'ER_NO_SUCH_TABLE') {
+      console.warn('RBAC tables are missing; continuing with no roles for user:', userId);
+      return { roles: [], permissions: [] };
+    }
+
+    throw error;
+  }
+}
+
+const authenticate = async (req, res, next) => {
+  const token = getBearerToken(req);
+
+  if (!token) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authorization header must be Bearer <token>',
+    });
+  }
+
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, getJwtSecret());
+  } catch (err) {
+    if (err.message === 'JWT_SECRET is not configured') {
+      err.status = 500;
+      return next(err);
+    }
+
+    console.error('Authentication error:', err);
+    const message = err.name === 'TokenExpiredError'
+      ? 'Token expired'
+      : 'Invalid token';
+
+    return res.status(401).json({ success: false, message });
+  }
+
+  try {
+    const [users] = await pool.execute(
+      'SELECT id, email, full_name, is_active FROM users WHERE id = ? AND is_active = 1',
+      [decoded.id]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({ success: false, message: 'User account is not active' });
+    }
+
+    const access = await getRolesAndPermissions(decoded.id);
+
     req.user = {
       ...decoded,
-      roles,
-      permissions: uniquePermissions,
-      isAdmin: roles.includes('admin')
+      id: users[0].id,
+      email: users[0].email,
+      full_name: users[0].full_name,
+      roles: access.roles,
+      permissions: access.permissions,
+      isAdmin: access.roles.includes('admin'),
     };
-    
-    next();
+
+    return next();
   } catch (err) {
-    console.error('Authentication error:', err);
-    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    return next(err);
   }
 };
 
-module.exports = { authenticate };
+module.exports = { authenticate, getRolesAndPermissions };
