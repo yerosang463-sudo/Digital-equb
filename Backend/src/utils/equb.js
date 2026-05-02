@@ -284,11 +284,12 @@ async function getEligibleWinnerIds(conn, groupId) {
     }
 
     console.log('Found eligible members:', rows.length);
-    console.log('Eligible members:', rows.map(r => ({ id: r.user_id, name: r.full_name, paid: r.has_paid_current_round })));
-
+    
     // Filter out members who have already won
-    const eligibleRows = rows.filter(r => !previousWinnerIds.includes(r.user_id));
+    const previousWinnerIdsStr = previousWinners.map(r => String(r.winner_id));
+    const eligibleRows = rows.filter(r => !previousWinnerIdsStr.includes(String(r.user_id)));
     const eligibleIds = eligibleRows.map(r => r.user_id);
+    
     console.log('Eligible winner IDs (excluding previous winners):', eligibleIds);
     return eligibleIds;
   } catch (error) {

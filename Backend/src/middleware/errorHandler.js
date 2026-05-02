@@ -32,7 +32,7 @@ const errorHandler = (err, req, res, next) => {
   res.status(status).json({
     success: false,
     message: status >= 500 && isProduction
-      ? 'An internal server error occurred. Please try again later.'
+      ? 'An internal server error occurred. Please check the backend logs for details.'
       : err.message || 'Internal server error',
     ...(isProduction ? {} : { stack: err.stack, details: err })
   });

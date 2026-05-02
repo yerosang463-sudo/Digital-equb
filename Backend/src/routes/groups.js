@@ -141,12 +141,12 @@ async function fetchGroupDetails(groupId, userId) {
     payments = paymentRows;
   }
 
-  const memberPayments = new Map(payments.map((payment) => [payment.payer_id, payment]));
+  const memberPayments = new Map(payments.map((payment) => [String(payment.payer_id), payment]));
   const hydratedMembers = members.map((member) => ({
     ...member,
-    has_paid_current_round: memberPayments.get(member.user_id)?.status === 'completed',
-    current_payment_id: memberPayments.get(member.user_id)?.id || null,
-    current_payment_status: memberPayments.get(member.user_id)?.status || null,
+    has_paid_current_round: memberPayments.get(String(member.user_id))?.status === 'completed',
+    current_payment_id: memberPayments.get(String(member.user_id))?.id || null,
+    current_payment_status: memberPayments.get(String(member.user_id))?.status || null,
   }));
 
   const [payouts] = await pool.query(
@@ -347,15 +347,16 @@ router.post(
     const {
       name,
       description,
-      contribution_amount,
       frequency,
-      max_members,
-      start_date,
-      end_date,
       winner_selection_mode = 'random',
       auto_select_winner = winner_selection_mode === 'random',
       is_public = false,
+      start_date,
+      end_date,
     } = req.body;
+
+    const contribution_amount = Number(req.body.contribution_amount);
+    const max_members = Number(req.body.max_members);
 
     const conn = await pool.getConnection();
     try {
@@ -961,17 +962,20 @@ router.post('/:id/close', authenticate, async (req, res, next) => {
 // GET /api/groups/:id/report - summary report for a group
 router.get('/:id/report', authenticate, async (req, res, next) => {
   try {
-    const details = await fetchGroupDetails(req.params.id, req.user.id);
+    const details = await fetchGroupDetails(Number(req.params.id), Number(req.user.id));
 
     if (!details) {
-      return res.status(404).json({ success: false, message: 'Group not found' });
+      return res.status(404).json({
+        success: false,
+        message: 'Group not found or access denied',
+      });
     }
 
     res.json({
       success: true,
       report: {
         ...details.report,
-        current_round: details.current_round,
+        current_round: Number(details.current_round),
         payouts: details.payouts,
       },
     });
