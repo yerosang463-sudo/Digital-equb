@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: digital-equb-api
+    name: digital-equb-2
     env: node
     rootDir: backend
     buildCommand: npm install

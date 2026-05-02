@@ -1,8 +1,12 @@
 const configuredApiUrl = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL;
 const API_BASE_URL = (
   configuredApiUrl ||
-  (import.meta.env.DEV ? "http://localhost:5000" : "https://digital-equb-api.onrender.com")
+  (import.meta.env.DEV ? "http://localhost:5000" : "https://digital-equb-2.onrender.com")
 ).replace(/\/$/, "");
+const FALLBACK_API_BASE_URL = "https://digital-equb-2.onrender.com";
+const API_URLS = API_BASE_URL === FALLBACK_API_BASE_URL
+  ? [API_BASE_URL]
+  : [API_BASE_URL, FALLBACK_API_BASE_URL];
 
 const TOKEN_KEY = "digital-equb-token";
 const USER_KEY = "digital-equb-user";
@@ -65,7 +69,7 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
     }
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  const requestOptions = {
     method,
     headers: {
       "Content-Type": "application/json",
@@ -73,7 +77,26 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
-  });
+  };
+
+  let response;
+  for (const baseUrl of API_URLS) {
+    try {
+      response = await fetch(`${baseUrl}${path}`, requestOptions);
+
+      if (response.status !== 404 || baseUrl === API_URLS[API_URLS.length - 1]) {
+        break;
+      }
+    } catch (error) {
+      response = null;
+    }
+  }
+
+  if (!response) {
+    throw new Error(
+      `Cannot reach the API server. Check that ${API_BASE_URL}/api/health is online.`
+    );
+  }
 
   const payload = await response.json().catch(() => ({}));
 
