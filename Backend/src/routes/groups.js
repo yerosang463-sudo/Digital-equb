@@ -54,14 +54,14 @@ async function fetchGroupDetails(groupId, userId) {
         creator.full_name AS creator_name,
         admin_user.full_name AS admin_name,
         (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id) AS member_count,
-        current_round.id AS current_round_id,
-        current_round.round_number AS current_round_number,
-        current_round.due_date AS next_payment_date,
-        current_round.status AS current_round_status,
-        current_round.selection_method AS current_round_selection_method,
-        current_round.winner_id AS current_winner_id,
+        latest_round.id AS current_round_id,
+        latest_round.round_number AS current_round_number,
+        latest_round.due_date AS next_payment_date,
+        latest_round.status AS current_round_status,
+        latest_round.selection_method AS current_round_selection_method,
+        latest_round.winner_id AS current_winner_id,
         winner.full_name AS current_winner_name,
-        latest_payout.round_number AS latest_winner_round_number,
+        latest_payout_data.round_number AS latest_winner_round_number,
         latest_winner.full_name AS latest_winner_name,
         my_member.role AS my_role,
         CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member
@@ -69,22 +69,19 @@ async function fetchGroupDetails(groupId, userId) {
       JOIN users creator ON creator.id = g.created_by
       LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
       LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
-      LEFT JOIN equb_rounds current_round ON current_round.id = (
-        SELECT r.id
+      LEFT JOIN (
+        SELECT r.id, r.group_id, r.round_number, r.due_date, r.status, r.selection_method, r.winner_id
         FROM equb_rounds r
-        WHERE r.group_id = g.id AND r.status IN ('collecting', 'winner_selected')
+        WHERE r.status IN ('collecting', 'winner_selected')
         ORDER BY r.round_number DESC
-        LIMIT 1
-      )
-      LEFT JOIN users winner ON winner.id = current_round.winner_id
-      LEFT JOIN payouts latest_payout ON latest_payout.id = (
-        SELECT p.id
+      ) AS latest_round ON latest_round.group_id = g.id
+      LEFT JOIN users winner ON winner.id = latest_round.winner_id
+      LEFT JOIN (
+        SELECT p.id, p.group_id, p.round_number, p.recipient_id
         FROM payouts p
-        WHERE p.group_id = g.id
         ORDER BY p.round_number DESC
-        LIMIT 1
-      )
-      LEFT JOIN users latest_winner ON latest_winner.id = latest_payout.recipient_id
+      ) AS latest_payout_data ON latest_payout_data.group_id = g.id
+      LEFT JOIN users latest_winner ON latest_winner.id = latest_payout_data.recipient_id
       LEFT JOIN group_members my_member ON my_member.group_id = g.id AND my_member.user_id = ?
       WHERE g.id = ?`,
     [userId, groupId]
@@ -189,8 +186,9 @@ router.get('/', authenticate, async (req, res, next) => {
         creator.full_name AS creator_name,
         admin_user.full_name AS admin_name,
         (SELECT COUNT(*) FROM group_members gm WHERE gm.group_id = g.id) AS member_count,
-        current_round.round_number AS current_round_number,
-        current_round.due_date AS next_payment_date,
+        latest_round.round_number AS current_round_number,
+        latest_round.due_date AS next_payment_date,
+        latest_round.id AS current_round_id,
         winner.full_name AS current_winner_name,
         g.is_public,
         CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member,
@@ -199,14 +197,13 @@ router.get('/', authenticate, async (req, res, next) => {
       JOIN users creator ON creator.id = g.created_by
       LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
       LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
-      LEFT JOIN equb_rounds current_round ON current_round.id = (
-        SELECT r.id
+      LEFT JOIN (
+        SELECT r.id, r.group_id, r.round_number, r.due_date, r.winner_id
         FROM equb_rounds r
-        WHERE r.group_id = g.id AND r.status IN ('collecting', 'winner_selected')
+        WHERE r.status IN ('collecting', 'winner_selected')
         ORDER BY r.round_number DESC
-        LIMIT 1
-      )
-      LEFT JOIN users winner ON winner.id = current_round.winner_id
+      ) AS latest_round ON latest_round.group_id = g.id
+      LEFT JOIN users winner ON winner.id = latest_round.winner_id
       LEFT JOIN group_members my_member ON my_member.group_id = g.id AND my_member.user_id = ?
       WHERE 1 = 1
     `;
@@ -228,7 +225,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    query += ' ORDER BY g.created_at DESC LIMIT ? OFFSET ?';
+    query += ' GROUP BY g.id ORDER BY g.created_at DESC LIMIT ? OFFSET ?';
     params.push(parseInt(limit, 10), offset);
 
     const [rows] = await pool.query(query, params);
@@ -276,23 +273,23 @@ router.get('/my', authenticate, async (req, res, next) => {
         creator.full_name AS creator_name,
         admin_user.full_name AS admin_name,
         (SELECT COUNT(*) FROM group_members m WHERE m.group_id = g.id) AS member_count,
-        current_round.round_number AS current_round_number,
-        current_round.due_date AS next_payment_date,
+        latest_round.round_number AS current_round_number,
+        latest_round.due_date AS next_payment_date,
         winner.full_name AS current_winner_name
        FROM equb_groups g
        JOIN group_members gm ON gm.group_id = g.id
        JOIN users creator ON creator.id = g.created_by
        LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
        LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
-       LEFT JOIN equb_rounds current_round ON current_round.id = (
-         SELECT r.id
+       LEFT JOIN (
+         SELECT r.id, r.group_id, r.round_number, r.due_date, r.winner_id
          FROM equb_rounds r
-         WHERE r.group_id = g.id AND r.status IN ('collecting', 'winner_selected')
+         WHERE r.status IN ('collecting', 'winner_selected')
          ORDER BY r.round_number DESC
-         LIMIT 1
-       )
-       LEFT JOIN users winner ON winner.id = current_round.winner_id
+       ) AS latest_round ON latest_round.group_id = g.id
+       LEFT JOIN users winner ON winner.id = latest_round.winner_id
        WHERE gm.user_id = ?
+       GROUP BY g.id
        ORDER BY gm.joined_at DESC`,
       [req.user.id]
     );

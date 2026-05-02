@@ -92,7 +92,7 @@ router.get('/users',
           u.id, u.full_name, u.email, u.phone, u.avatar_url, u.bio,
           u.is_active, u.created_at, u.updated_at,
           GROUP_CONCAT(DISTINCT r.name) as roles,
-          GROUP_CONCAT(DISTINCT CONCAT(g.id, ':', g.name)) as groups
+          GROUP_CONCAT(DISTINCT CONCAT(g.id, ':', g.name)) as user_groups
         FROM users u
         LEFT JOIN user_roles ur ON u.id = ur.user_id
         LEFT JOIN roles r ON ur.role_id = r.id
@@ -134,7 +134,7 @@ router.get('/users',
       const normalizedRows = rows.map((row) => ({
         ...row,
         roles: row.roles ? row.roles.split(',') : [],
-        groups: row.groups ? row.groups.split(',').map(group => {
+        groups: row.user_groups ? row.user_groups.split(',').map(group => {
           const [id, name] = group.split(':');
           return { id: parseInt(id), name };
         }) : [],
