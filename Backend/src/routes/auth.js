@@ -221,7 +221,9 @@ router.post('/google', async (req, res, next) => {
       user: removePassword(user),
     });
   } catch (err) {
-    console.error('Google verification error:', err.message);
+    console.error('Google verification failed detail:', err);
+    console.error('Google verification error message:', err.message);
+    
     if (err.message === 'JWT_SECRET is not configured') {
       return next(Object.assign(err, { status: 500 }));
     }
@@ -230,7 +232,16 @@ router.post('/google', async (req, res, next) => {
       return next(err);
     }
 
-    return res.status(401).json({ success: false, message: 'Invalid Google token' });
+    // Return more specific error message if available from the library
+    const errorMessage = err.message && err.message.includes('Token used too late') 
+      ? 'Google token expired' 
+      : 'Invalid Google token';
+
+    return res.status(401).json({ 
+      success: false, 
+      message: errorMessage,
+      ...(process.env.NODE_ENV !== 'production' ? { detail: err.message } : {})
+    });
   }
 });
 

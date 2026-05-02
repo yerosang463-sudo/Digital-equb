@@ -7,7 +7,7 @@ function getBearerToken(req) {
   const authHeader = req.get('authorization') || '';
   const [scheme, token] = authHeader.trim().split(/\s+/);
 
-  if (scheme !== 'Bearer' || !token) {
+  if (!scheme || scheme.toLowerCase() !== 'bearer' || !token) {
     return null;
   }
 
@@ -71,16 +71,21 @@ const authenticate = async (req, res, next) => {
     decoded = jwt.verify(token, getJwtSecret());
   } catch (err) {
     if (err.message === 'JWT_SECRET is not configured') {
+      console.error('[Auth] JWT_SECRET missing in environment');
       err.status = 500;
       return next(err);
     }
 
-    console.error('Authentication error:', err);
+    console.error(`[Auth] Verification failed: ${err.name} - ${err.message}`);
+    
     const message = err.name === 'TokenExpiredError'
-      ? 'Token expired'
-      : 'Invalid token';
+      ? 'Your session has expired. Please login again.'
+      : 'Invalid session token. Please login again.';
 
-    return res.status(401).json({ success: false, message });
+    const error = new Error(message);
+    error.status = 401;
+    error.name = err.name;
+    return next(error);
   }
 
   try {

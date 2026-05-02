@@ -376,9 +376,10 @@ router.post(
           winner_selection_mode,
           auto_select_winner,
           is_public,
-          created_by
+          created_by,
+          created_at
         )
-         VALUES (?, ?, ?, ?, ?, 1, ?, 'open', ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, 1, ?, 'open', ?, ?, ?, ?, ?, ?, NOW())`,
         [
           name,
           description || null,
@@ -395,18 +396,24 @@ router.post(
         ]
       );
 
+      const groupId = Number(result.insertId);
+
       await conn.query(
-        `INSERT INTO group_members (group_id, user_id, role, payout_order)
-         VALUES (?, ?, 'admin', 1)`,
-        [result.insertId, req.user.id]
+        `INSERT INTO group_members (group_id, user_id, role, payout_order, joined_at)
+         VALUES (?, ?, 'admin', 1, NOW())`,
+        [groupId, req.user.id]
       );
 
-      const groupDataForRound = await getGroupById(conn, result.insertId);
+      const groupDataForRound = await getGroupById(conn, groupId);
+      if (!groupDataForRound) {
+        throw new Error('Failed to retrieve newly created group');
+      }
+      
       await createRound(conn, groupDataForRound, 1);
 
       await conn.commit();
 
-      const details = await fetchGroupDetails(result.insertId, req.user.id);
+      const details = await fetchGroupDetails(groupId, req.user.id);
       res.status(201).json({
         success: true,
         message: 'Group created successfully',

@@ -36,8 +36,8 @@ async function createNotification(
   { userId, title, message, type = "system", relatedGroupId = null, relatedPaymentId = null }
 ) {
   await conn.query(
-    `INSERT INTO notifications (user_id, title, message, type, related_group_id, related_payment_id)
-     VALUES (?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO notifications (user_id, title, message, type, related_group_id, related_payment_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, NOW())`,
     [userId, title, message, type, relatedGroupId, relatedPaymentId]
   );
 }
@@ -218,9 +218,10 @@ async function ensureRoundPaymentsForMembers(
         status,
         payment_method,
         due_date,
-        simulation_status
+        simulation_status,
+        created_at
       )
-      VALUES (?, ?, ?, ?, ?, 'pending', 'telebirr', ?, 'initiated')`,
+      VALUES (?, ?, ?, ?, ?, 'pending', 'telebirr', ?, 'initiated', NOW())`,
       [group.id, member.user_id, roundId, roundNumber, group.contribution_amount, dueDate]
     );
   }
@@ -410,9 +411,10 @@ async function selectWinnerForRound(
       round_number,
       amount,
       status,
-      scheduled_date
+      scheduled_date,
+      created_at
     )
-    VALUES (?, ?, ?, ?, ?, 'scheduled', ?)`,
+    VALUES (?, ?, ?, ?, ?, 'scheduled', ?, NOW())`,
     [groupId, round.id, winnerId, round.round_number, amount, round.due_date]
   );
 
