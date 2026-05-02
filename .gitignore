@@ -36,3 +36,18 @@ pnpm-debug.log*
 .DS_Store
 Thumbs.db
 *.bak
+
+# Documentation files (TiDB migration guides)
+*.txt
+!README.txt
+Digital_Equb_Presentation.txt
+TiDB_Migration_Guide.txt
+TIDB_QUICK_REFERENCE.txt
+TIDB_VISUAL_SETUP_GUIDE.txt
+TIDB_SUMMARY.txt
+MIGRATION_CHECKLIST.txt
+DATABASE_COMPARISON.txt
+README_TIDB_MIGRATION.txt
+HOW_TO_DEPLOY_DATABASE_TO_TIDB.txt
+DEPLOYMENT_STEPS_VISUAL.txt
+DEPLOY_DATABASE_QUICK_GUIDE.txt
