@@ -165,6 +165,76 @@ async function ensurePaymentTableEnumModification() {
   await modifyColumnIfExists('payments', 'payment_method', "ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other', 'system_auto') DEFAULT 'telebirr'");
 }
 
+async function ensureAdminUser() {
+  if (!(await tableExists('users'))) {
+    console.log('users table does not exist yet - skipping admin user setup');
+    return;
+  }
+
+  if (!(await tableExists('roles'))) {
+    console.log('roles table does not exist yet - skipping admin user setup');
+    return;
+  }
+
+  if (!(await tableExists('user_roles'))) {
+    console.log('user_roles table does not exist yet - skipping admin user setup');
+    return;
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.log('ADMIN_EMAIL not set - skipping admin user setup');
+    return;
+  }
+
+  console.log('Setting up admin user for:', adminEmail);
+
+  // Get admin role
+  const [roleRows] = await pool.execute(
+    'SELECT id FROM roles WHERE name = ?',
+    ['admin']
+  );
+
+  if (roleRows.length === 0) {
+    console.log('Admin role not found - skipping admin user setup');
+    return;
+  }
+
+  const adminRoleId = roleRows[0].id;
+
+  // Get user by admin email
+  const [userRows] = await pool.execute(
+    'SELECT id FROM users WHERE email = ?',
+    [adminEmail]
+  );
+
+  if (userRows.length === 0) {
+    console.log('Admin user not found - user needs to register first');
+    return;
+  }
+
+  const userId = userRows[0].id;
+
+  // Check if user already has admin role
+  const [existingRows] = await pool.execute(
+    'SELECT id FROM user_roles WHERE user_id = ? AND role_id = ?',
+    [userId, adminRoleId]
+  );
+
+  if (existingRows.length > 0) {
+    console.log('Admin user already has admin role');
+    return;
+  }
+
+  // Assign admin role
+  await pool.execute(
+    'INSERT INTO user_roles (user_id, role_id, assigned_by, assigned_at) VALUES (?, ?, ?, NOW())',
+    [userId, adminRoleId, userId]
+  );
+
+  console.log('✅ Admin role assigned to:', adminEmail);
+}
+
 async function autoMigrate() {
   try {
     console.log('Running automatic database migrations...');
@@ -173,6 +243,7 @@ async function autoMigrate() {
     await ensureRbacTables();
     await ensureGroupMemberPaymentColumn();
     await ensurePaymentTableEnumModification();
+    await ensureAdminUser();
 
     console.log('Automatic database migrations completed');
     
