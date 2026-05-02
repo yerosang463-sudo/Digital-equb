@@ -1,9 +1,8 @@
 -- Digital Equb Database Schema
--- Database: sql12824412
--- User: sql12824412
+-- Database: digital_equb
+-- User: 2BRQf59wBsyjd1Y.root
 
-CREATE DATABASE IF NOT EXISTS `sql12824412`;
-USE `sql12824412`;
+USE `digital_equb`;
 
 -- Users table
 CREATE TABLE IF NOT EXISTS users (

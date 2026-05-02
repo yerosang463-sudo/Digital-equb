@@ -121,12 +121,14 @@ class DatabaseMigrator {
               // This handles USE, SET, PREPARE, EXECUTE, DEALLOCATE, and regular SQL
               await connection.query(statement);
             } catch (stmtError) {
-              // Some statements might fail if they already exist (like CREATE TABLE IF NOT EXISTS)
+              // Some statements might fail if they already exist or tables don't exist
               // We'll log but continue for idempotent operations
               if (stmtError.code === 'ER_TABLE_EXISTS_ERROR' || 
                   stmtError.code === 'ER_DUP_ENTRY' ||
-                  stmtError.message.includes('already exists')) {
-                console.log(`   ℹ Statement ${i + 1} already applied (${stmtError.code})`);
+                  stmtError.code === 'ER_NO_SUCH_TABLE' ||
+                  stmtError.message.includes('already exists') ||
+                  stmtError.message.includes('doesn\'t exist')) {
+                console.log(`   ℹ Statement ${i + 1} skipped (${stmtError.code || 'Table doesn\'t exist'})`);
               } else {
                 console.error(`    Statement ${i + 1} failed:`, statement.substring(0, 100) + '...');
                 throw stmtError;

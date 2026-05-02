@@ -1,20 +1,20 @@
 -- Seed data for Digital Equb
 -- Testing Sample: 4 members, 4 completed rounds, full history
-USE `sql12824412`;
+USE `digital_equb`;
 
 SET FOREIGN_KEY_CHECKS = 0;
--- Delete existing data (only from tables that exist)
+-- Delete existing data - ignore errors if tables don't exist
+DELETE FROM users;
+DELETE FROM equb_groups;
+DELETE FROM group_members;
+DELETE FROM group_invitations;
+DELETE FROM equb_rounds;
+DELETE FROM payments;
+DELETE FROM payouts;
+DELETE FROM notifications;
+-- These will be created in migration_v5.sql, so ignore errors
 DELETE FROM user_roles;
 DELETE FROM roles;
-DELETE FROM notifications;
-DELETE FROM payouts;
-DELETE FROM payments;
-DELETE FROM equb_rounds;
-DELETE FROM group_invitations;
-DELETE FROM group_members;
-DELETE FROM equb_groups;
-DELETE FROM users;
--- admin_actions will be empty after schema.sql creates it, so no need to delete
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ─── Users (password for all: password123) ───────────────────────────────────
