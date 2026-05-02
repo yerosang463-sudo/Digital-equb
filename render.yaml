@@ -41,15 +41,15 @@ services:
       - key: GOOGLE_CLIENT_SECRET
         sync: false
       - key: DB_HOST
-        sync: false
+        value: gateway01.eu-central-1.prod.aws.tidbcloud.com
       - key: DB_PORT
         value: 4000
       - key: DB_USER
-        sync: false
+        value: 3Bp4raYyG2XUGVy.root
       - key: DB_PASSWORD
-        sync: false
+        value: pt6dFRCVnvbtWrYm
       - key: DB_NAME
-        sync: false
+        value: digital_equb
       - key: EMAIL_USER
         sync: false
       - key: EMAIL_PASS
