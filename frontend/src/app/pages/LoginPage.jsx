@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Separator } from "../components/ui/separator";
 import { useAuth } from "../providers/AuthProvider";
 
-// Lazy load GoogleLogin component to improve initial load performance
-const GoogleLogin = lazy(() => import("@react-oauth/google").then(module => ({ default: module.GoogleLogin })));
+// Import GoogleLogin directly to avoid multiple initialization issues
+import { GoogleLogin } from "@react-oauth/google";
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -83,17 +83,16 @@ export function LoginPage() {
           {/* Social Logins */}
           <div className="flex justify-center">
             {googleScriptLoaded && !googleError ? (
-              <Suspense fallback={<div className="w-full max-w-[360px] h-12 bg-gray-700/50 rounded-full animate-pulse" />}>
-                <GoogleLogin
-                  onSuccess={handleGoogleSuccess}
-                  onError={handleGoogleError}
-                  theme="filled_blue"
-                  shape="pill"
-                  size="large"
-                  text="continue_with"
-                  width="360"
-                />
-              </Suspense>
+              <GoogleLogin
+                key="google-login-button"
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                theme="filled_blue"
+                shape="pill"
+                size="large"
+                text="continue_with"
+                width="360"
+              />
             ) : (
               <div className="w-full max-w-[360px] text-center">
                 <p className="text-gray-400 text-sm mb-2">Google login unavailable</p>
