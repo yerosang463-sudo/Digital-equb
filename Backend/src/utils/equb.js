@@ -231,66 +231,35 @@ async function getEligibleWinnerIds(conn, groupId) {
   try {
     console.log('Getting eligible winner IDs for group:', groupId);
     
-    // Get all previous winners from this group (excluding current round)
+    // Get all previous winners from this group
     const [previousWinners] = await conn.query(
-      `SELECT DISTINCT r.winner_id
-       FROM equb_rounds r
-       WHERE r.group_id = ?
-       AND r.winner_id IS NOT NULL
-       AND r.status IN ('winner_selected', 'closed')`,
+      `SELECT DISTINCT winner_id FROM equb_rounds WHERE group_id = ? AND winner_id IS NOT NULL`,
       [groupId]
     );
+    const previousWinnerIdsStr = previousWinners.map(r => String(r.winner_id));
     
-    const previousWinnerIds = previousWinners.map(r => r.winner_id);
-    console.log('Previous winners in this group:', previousWinnerIds);
-    
-    // Check if column exists first
-    const [columnCheck] = await conn.query(
-      `SELECT COUNT(*) as count
-       FROM INFORMATION_SCHEMA.COLUMNS
-       WHERE TABLE_SCHEMA = DATABASE()
-       AND TABLE_NAME = 'group_members'
-       AND COLUMN_NAME = 'has_paid_current_round'`
-    );
-
-    const columnExists = columnCheck[0].count > 0;
-    console.log('has_paid_current_round column exists:', columnExists);
-
+    // Get all members who have paid for the current round
+    // Try to use has_paid_current_round if column exists
     let rows;
-    if (columnExists) {
+    try {
       [rows] = await conn.query(
-        `SELECT gm.user_id, u.full_name, gm.has_paid_current_round
-         FROM group_members gm
-         JOIN users u ON u.id = gm.user_id
-         WHERE gm.group_id = ?
-         AND gm.has_paid_current_round = 1
-         ORDER BY gm.payout_order ASC`,
+        `SELECT user_id FROM group_members WHERE group_id = ? AND has_paid_current_round = 1`,
         [groupId]
       );
-    } else {
-      // Fallback: use payment status instead
-      console.log('Using payment status fallback for eligible winners');
+    } catch (err) {
+      // Fallback: use payment status
       [rows] = await conn.query(
-        `SELECT DISTINCT gm.user_id, u.full_name, 1 as has_paid_current_round
-         FROM group_members gm
-         JOIN users u ON u.id = gm.user_id
-         JOIN payments p ON p.payer_id = gm.user_id AND p.group_id = gm.group_id
-         WHERE gm.group_id = ?
-         AND p.status = 'completed'
-         AND gm.has_received_payout = 0
-         ORDER BY gm.payout_order ASC`,
+        `SELECT DISTINCT payer_id as user_id FROM payments WHERE group_id = ? AND status = 'completed'`,
         [groupId]
       );
     }
-
-    console.log('Found eligible members:', rows.length);
     
-    // Filter out members who have already won
-    const previousWinnerIdsStr = previousWinners.map(r => String(r.winner_id));
-    const eligibleRows = rows.filter(r => !previousWinnerIdsStr.includes(String(r.user_id)));
-    const eligibleIds = eligibleRows.map(r => r.user_id);
-    
-    console.log('Eligible winner IDs (excluding previous winners):', eligibleIds);
+    // Filter out members who already won in previous rounds
+    const eligibleIds = rows
+      .filter(r => !previousWinnerIdsStr.includes(String(r.user_id)))
+      .map(r => r.user_id);
+      
+    console.log('Eligible winner IDs:', eligibleIds);
     return eligibleIds;
   } catch (error) {
     console.error('Error in getEligibleWinnerIds:', error);
