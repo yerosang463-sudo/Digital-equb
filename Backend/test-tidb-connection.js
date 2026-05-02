@@ -31,6 +31,10 @@ async function testTiDBConnection() {
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
       connectTimeout: 10000,
+      ssl: {
+        minVersion: 'TLSv1.2',
+        rejectUnauthorized: true
+      }
     });
 
     console.log('✅ Connected to TiDB successfully!\n');
