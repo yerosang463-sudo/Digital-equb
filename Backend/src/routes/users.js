@@ -225,8 +225,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    query += ' ORDER BY full_name ASC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
+    query += ' ORDER BY full_name ASC LIMIT ' + parseInt(limit) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 

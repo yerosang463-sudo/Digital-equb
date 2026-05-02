@@ -112,8 +112,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(group_id);
     }
 
-    query += ' ORDER BY COALESCE(p.due_date, p.created_at) DESC, p.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit, 10), offset);
+    query += ' ORDER BY COALESCE(p.due_date, p.created_at) DESC, p.created_at DESC LIMIT ' + parseInt(limit, 10) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 
@@ -160,8 +159,7 @@ router.get('/group/:groupId', authenticate, async (req, res, next) => {
       params.push(Number(round));
     }
 
-    query += ' ORDER BY p.round_number DESC, p.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit, 10), offset);
+    query += ' ORDER BY p.round_number DESC, p.created_at DESC LIMIT ' + parseInt(limit, 10) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 

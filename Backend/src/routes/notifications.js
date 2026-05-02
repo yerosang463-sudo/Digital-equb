@@ -22,8 +22,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(parseInt(is_read));
     }
 
-    query += ' ORDER BY n.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit), offset);
+    query += ' ORDER BY n.created_at DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 

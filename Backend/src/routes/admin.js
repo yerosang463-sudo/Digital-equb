@@ -127,8 +127,7 @@ router.get('/users',
       const total = countRows[0].total;
       
       // Add ordering and pagination
-      query += ' ORDER BY u.created_at DESC LIMIT ? OFFSET ?';
-      params.push(parseInt(limit), parseInt(offset));
+      query += ' ORDER BY u.created_at DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(offset);
       
       const [rows] = await pool.execute(query, params);
       const normalizedRows = rows.map((row) => ({
@@ -539,8 +538,7 @@ router.get('/groups',
       const total = countRows[0].total;
       
       // Add ordering and pagination
-      query += ' ORDER BY g.created_at DESC LIMIT ? OFFSET ?';
-      params.push(parseInt(limit), parseInt(offset));
+      query += ' ORDER BY g.created_at DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(offset);
       
       const [rows] = await pool.execute(query, params);
       
@@ -1359,8 +1357,7 @@ router.get('/payments',
       const total = countRows[0].total;
       
       // Add ordering and pagination
-      query += ' ORDER BY p.created_at DESC LIMIT ? OFFSET ?';
-      params.push(parseInt(limit), parseInt(offset));
+      query += ' ORDER BY p.created_at DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(offset);
       
       const [rows] = await pool.execute(query, params);
       
@@ -1590,8 +1587,7 @@ router.get('/payouts',
       }
       
       // Add ordering and pagination
-      query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
-      params.push(parseInt(limit), parseInt(offset));
+      query += ' ORDER BY created_at DESC LIMIT ' + parseInt(limit) + ' OFFSET ' + parseInt(offset);
       
       const [rows] = await pool.execute(query, params);
       

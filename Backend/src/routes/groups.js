@@ -191,7 +191,7 @@ router.get('/', authenticate, async (req, res, next) => {
         latest_round.id AS current_round_id,
         winner.full_name AS current_winner_name,
         g.is_public,
-        CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member,
+        my_member.user_id IS NOT NULL AS is_member,
         my_member.role = 'admin' AS is_admin
       FROM equb_groups g
       JOIN users creator ON creator.id = g.created_by
@@ -206,6 +206,7 @@ router.get('/', authenticate, async (req, res, next) => {
       LEFT JOIN users winner ON winner.id = latest_round.winner_id
       LEFT JOIN group_members my_member ON my_member.group_id = g.id AND my_member.user_id = ?
       WHERE 1 = 1
+      GROUP BY g.id, creator.full_name, admin_user.full_name, latest_round.round_number, latest_round.due_date, latest_round.id, winner.full_name, my_member.user_id, my_member.role
     `;
 
     const params = [req.user.id];
@@ -225,8 +226,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    query += ' GROUP BY g.id ORDER BY g.created_at DESC LIMIT ? OFFSET ?';
-    params.push(parseInt(limit, 10), offset);
+    query += ' GROUP BY g.id ORDER BY g.created_at DESC LIMIT ' + parseInt(limit, 10) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 
@@ -289,7 +289,7 @@ router.get('/my', authenticate, async (req, res, next) => {
        ) AS latest_round ON latest_round.group_id = g.id
        LEFT JOIN users winner ON winner.id = latest_round.winner_id
        WHERE gm.user_id = ?
-       GROUP BY g.id
+       GROUP BY g.id, gm.role, gm.payout_order, gm.has_received_payout, gm.payout_date, gm.joined_at, creator.full_name, admin_user.full_name, latest_round.round_number, latest_round.due_date, winner.full_name
        ORDER BY gm.joined_at DESC`,
       [req.user.id]
     );
