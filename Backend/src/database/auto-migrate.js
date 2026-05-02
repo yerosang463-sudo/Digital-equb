@@ -4,6 +4,21 @@ async function autoMigrate() {
   try {
     console.log('Running automatic database migrations...');
     
+    // Check if group_members table exists first
+    const [tableCheck] = await pool.execute(
+      `SELECT COUNT(*) as count
+       FROM INFORMATION_SCHEMA.TABLES
+       WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'group_members'`
+    );
+
+    const tableExists = tableCheck[0].count > 0;
+    
+    if (!tableExists) {
+      console.log('group_members table does not exist yet - skipping auto-migration');
+      return;
+    }
+    
     // Check if has_paid_current_round column exists
     const [columnCheck] = await pool.execute(
       `SELECT COUNT(*) as count
