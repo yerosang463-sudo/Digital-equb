@@ -94,7 +94,7 @@ CREATE TABLE IF NOT EXISTS payments (
   round_number INT NULL,
   amount DECIMAL(12, 2) NOT NULL,
   status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
-  payment_method ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other') DEFAULT 'telebirr',
+  payment_method ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other', 'system_auto') DEFAULT 'telebirr',
   transaction_ref VARCHAR(100),
   telebirr_phone VARCHAR(20),
   simulation_status ENUM('initiated', 'success', 'failed') DEFAULT 'initiated',

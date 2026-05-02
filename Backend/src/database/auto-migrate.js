@@ -48,6 +48,15 @@ async function addColumnIfMissing(tableName, columnName, definition) {
   await pool.execute(`ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`);
 }
 
+async function modifyColumnIfExists(tableName, columnName, definition) {
+  if (!(await columnExists(tableName, columnName))) {
+    return;
+  }
+
+  console.log(`Ensuring ${tableName}.${columnName} definition...`);
+  await pool.execute(`ALTER TABLE ${tableName} MODIFY COLUMN ${columnName} ${definition}`);
+}
+
 async function ensureGoogleAuthColumns() {
   if (!(await tableExists('users'))) {
     console.log('users table does not exist yet - skipping auth column migration');
@@ -147,6 +156,15 @@ async function ensureGroupMemberPaymentColumn() {
   );
 }
 
+async function ensurePaymentTableEnumModification() {
+  if (!(await tableExists('payments'))) {
+    console.log('payments table does not exist yet - skipping payment table migration');
+    return;
+  }
+
+  await modifyColumnIfExists('payments', 'payment_method', "ENUM('bank_transfer', 'mobile_money', 'telebirr', 'cash', 'other', 'system_auto') DEFAULT 'telebirr'");
+}
+
 async function autoMigrate() {
   try {
     console.log('Running automatic database migrations...');
@@ -154,6 +172,7 @@ async function autoMigrate() {
     await ensureGoogleAuthColumns();
     await ensureRbacTables();
     await ensureGroupMemberPaymentColumn();
+    await ensurePaymentTableEnumModification();
 
     console.log('Automatic database migrations completed');
     
