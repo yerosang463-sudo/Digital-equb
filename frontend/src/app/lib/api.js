@@ -109,7 +109,10 @@ export async function apiRequest(path, { method = "GET", body, token, headers = 
     error.status = response.status;
     error.payload = payload;
 
-    if (response.status === 401 && !path.startsWith("/api/auth/login") && !path.startsWith("/api/auth/register")) {
+    if (response.status === 401 && 
+        !path.startsWith("/api/auth/login") && 
+        !path.startsWith("/api/auth/register") && 
+        !payload?.message?.toLowerCase().includes("password")) {
       clearStoredAuth();
     }
 

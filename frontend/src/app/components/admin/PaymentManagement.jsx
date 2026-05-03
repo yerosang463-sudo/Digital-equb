@@ -17,7 +17,8 @@ import {
   CreditCard,
   RefreshCw,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  Trash2
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -27,6 +28,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { apiRequest } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 import { 
   Dialog,
   DialogContent,
@@ -40,6 +42,7 @@ import { Textarea } from '../ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 
 const PaymentManagement = () => {
+  const { token } = useAuth();
   const [payments, setPayments] = useState([]);
   const [payouts, setPayouts] = useState([]);
   const [filteredPayments, setFilteredPayments] = useState([]);
@@ -52,6 +55,8 @@ const PaymentManagement = () => {
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [selectedPayout, setSelectedPayout] = useState(null);
   const [showRefundDialog, setShowRefundDialog] = useState(false);
+  const [showDeletePaymentDialog, setShowDeletePaymentDialog] = useState(false);
+  const [showDeletePayoutDialog, setShowDeletePayoutDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showPayoutDetailsDialog, setShowPayoutDetailsDialog] = useState(false);
   const [password, setPassword] = useState('');
@@ -76,7 +81,9 @@ const PaymentManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiRequest(`/api/admin/payments?page=${page}&limit=10`);
+      const response = await apiRequest(`/api/admin/payments?page=${page}&limit=10`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setPayments(response.data.payments);
@@ -95,7 +102,9 @@ const PaymentManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiRequest(`/api/admin/payouts?page=${page}&limit=10`);
+      const response = await apiRequest(`/api/admin/payouts?page=${page}&limit=10`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setPayouts(response.data.payouts);
@@ -137,7 +146,8 @@ const PaymentManagement = () => {
       
       const response = await apiRequest(`/api/admin/payments/${paymentId}/refund`, {
         method: 'POST',
-        body: { password, reason }
+        body: { password, reason },
+        token: token || undefined
       });
       
       if (response.success) {
@@ -160,11 +170,61 @@ const PaymentManagement = () => {
     }
   };
 
+  const handleDeletePayment = async (paymentId) => {
+    try {
+      setActionLoading(true);
+      
+      const response = await apiRequest(`/api/admin/payments/${paymentId}`, {
+        method: 'DELETE',
+        body: { password },
+        token: token || undefined
+      });
+      
+      if (response.success) {
+        setPayments(prevPayments => prevPayments.filter(p => p.id !== paymentId));
+        setShowDeletePaymentDialog(false);
+        setPassword('');
+        setSelectedPayment(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete payment:', err);
+      setError(err.message || 'Failed to delete payment');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeletePayout = async (payoutId) => {
+    try {
+      setActionLoading(true);
+      
+      const response = await apiRequest(`/api/admin/payouts/${payoutId}`, {
+        method: 'DELETE',
+        body: { password },
+        token: token || undefined
+      });
+      
+      if (response.success) {
+        setPayouts(prevPayouts => prevPayouts.filter(p => p.id !== payoutId));
+        setShowDeletePayoutDialog(false);
+        setPassword('');
+        setSelectedPayout(null);
+      }
+    } catch (err) {
+      console.error('Failed to delete payout:', err);
+      setError(err.message || 'Failed to delete payout');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const fetchPaymentDetails = async (paymentId) => {
     try {
       setActionLoading(true);
       
-      const response = await apiRequest(`/api/admin/payments/${paymentId}`);
+      const response = await apiRequest(`/api/admin/payments/${paymentId}`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setSelectedPayment(response.data.payment);
@@ -182,7 +242,9 @@ const PaymentManagement = () => {
     try {
       setActionLoading(true);
 
-      const response = await apiRequest(`/api/admin/payouts/${payout.id}`);
+      const response = await apiRequest(`/api/admin/payouts/${payout.id}`, {
+        token: token || undefined
+      });
 
       if (response.success) {
         setSelectedPayout(response.data.payout);
@@ -353,6 +415,17 @@ const PaymentManagement = () => {
                                 Process Refund
                               </DropdownMenuItem>
                             )}
+
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => {
+                                setSelectedPayment(payment);
+                                setShowDeletePaymentDialog(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Permanently Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -430,6 +503,16 @@ const PaymentManagement = () => {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => {
+                                setSelectedPayout(payout);
+                                setShowDeletePayoutDialog(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Permanently Delete
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -506,6 +589,82 @@ const PaymentManagement = () => {
               disabled={!reason || reason.length < 10 || actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Process Refund'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      {/* Delete Payment Dialog */}
+      <Dialog open={showDeletePaymentDialog} onOpenChange={setShowDeletePaymentDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Permanently Delete Payment
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to PERMANENTLY delete this payment record of ${selectedPayment?.amount}? This will remove it from all reports and calculations. This action is irreversible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="delete-payment-password">Confirm Your Password</Label>
+              <Input
+                id="delete-payment-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeletePaymentDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => handleDeletePayment(selectedPayment?.id)}
+              disabled={!password || actionLoading}
+            >
+              {actionLoading ? 'Deleting...' : 'Permanently Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Payout Dialog */}
+      <Dialog open={showDeletePayoutDialog} onOpenChange={setShowDeletePayoutDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Permanently Delete Payout
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to PERMANENTLY delete this payout record of ${selectedPayout?.amount}? This will remove it from all reports. This action is irreversible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="delete-payout-password">Confirm Your Password</Label>
+              <Input
+                id="delete-payout-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeletePayoutDialog(false)}>
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => handleDeletePayout(selectedPayout?.id)}
+              disabled={!password || actionLoading}
+            >
+              {actionLoading ? 'Deleting...' : 'Permanently Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>

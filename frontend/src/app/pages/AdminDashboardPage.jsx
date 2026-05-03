@@ -84,7 +84,7 @@ const AdminDashboardPage = () => {
 
   const navigate = useNavigate();
 
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
 
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -124,7 +124,10 @@ const AdminDashboardPage = () => {
     try {
       setLoading(true);
       setError('');
-      const response = await apiRequest('/api/admin/analytics', { skipCache: true });
+      const response = await apiRequest('/api/admin/analytics', { 
+        token: token || undefined,
+        skipCache: true 
+      });
 
       if (response.success) {
         const data = response.data;

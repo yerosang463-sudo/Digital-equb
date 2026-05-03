@@ -34,6 +34,7 @@ import {
 } from '../ui/dropdown-menu';
 import { Badge } from '../ui/badge';
 import { apiRequest } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 import { 
   Dialog,
   DialogContent,
@@ -46,6 +47,7 @@ import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 
 const GroupManagement = () => {
+  const { token } = useAuth();
   const [groups, setGroups] = useState([]);
   const [filteredGroups, setFilteredGroups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,9 @@ const GroupManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiRequest(`/api/admin/groups?page=${page}&limit=10`);
+      const response = await apiRequest(`/api/admin/groups?page=${page}&limit=10`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setGroups(response.data.groups);
@@ -92,7 +96,7 @@ const GroupManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch groups:', err);
-      setError('Failed to load groups');
+      setError(err.message || 'Failed to load groups');
     } finally {
       setLoading(false);
     }
@@ -154,7 +158,8 @@ const GroupManagement = () => {
       
       const response = await apiRequest(`/api/admin/groups/${groupId}`, {
         method: 'PUT',
-        body: updates
+        body: updates,
+        token: token || undefined
       });
       
       if (response.success) {
@@ -179,7 +184,9 @@ const GroupManagement = () => {
     try {
       setActionLoading(true);
       
-      const response = await apiRequest(`/api/admin/groups/${groupId}`);
+      const response = await apiRequest(`/api/admin/groups/${groupId}`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setSelectedGroup(response.data.group);
@@ -199,7 +206,8 @@ const GroupManagement = () => {
 
       const response = await apiRequest(`/api/admin/groups/${groupId}`, {
         method: 'DELETE',
-        body: { password }
+        body: { password },
+        token: token || undefined
       });
 
       if (response.success) {
@@ -220,7 +228,9 @@ const GroupManagement = () => {
     try {
       setActionLoading(true);
       
-      const response = await apiRequest(`/api/admin/groups/${groupId}`);
+      const response = await apiRequest(`/api/admin/groups/${groupId}`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setGroupMembers(response.data.members || []);
@@ -239,7 +249,9 @@ const GroupManagement = () => {
     try {
       setActionLoading(true);
       
-      const response = await apiRequest('/api/admin/users?limit=100');
+      const response = await apiRequest('/api/admin/users?limit=100', {
+        token: token || undefined
+      });
       
       if (response.success) {
         // Filter out users who are already members of the selected group
@@ -268,7 +280,8 @@ const GroupManagement = () => {
         body: { 
           user_id: selectedUserToAdd.id,
           password 
-        }
+        },
+        token: token || undefined
       });
       
       if (response.success) {
@@ -295,7 +308,8 @@ const GroupManagement = () => {
       
       const response = await apiRequest(`/api/admin/groups/${selectedGroup.id}/members/${selectedMember.id}`, {
         method: 'DELETE',
-        body: { password }
+        body: { password },
+        token: token || undefined
       });
       
       if (response.success) {

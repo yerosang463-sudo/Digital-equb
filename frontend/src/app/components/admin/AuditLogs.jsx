@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '../ui/badge';
 import { apiRequest } from '../../lib/api';
+import { useAuth } from '../../providers/AuthProvider';
 import { 
   Dialog,
   DialogContent,
@@ -31,6 +32,7 @@ import {
 import { Label } from '../ui/label';
 
 const AuditLogs = () => {
+  const { token } = useAuth();
   const [auditLogs, setAuditLogs] = useState([]);
   const [filteredLogs, setFilteredLogs] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,9 @@ const AuditLogs = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiRequest(`/api/admin/audit-logs?page=${page}&limit=20`);
+      const response = await apiRequest(`/api/admin/audit-logs?page=${page}&limit=20`, {
+        token: token || undefined
+      });
       
       if (response.success) {
         setAuditLogs(response.data.logs || []);

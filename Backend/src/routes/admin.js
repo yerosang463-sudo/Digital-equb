@@ -775,7 +775,11 @@ router.get('/groups/:id',
         LEFT JOIN group_members gm ON g.id = gm.group_id
         LEFT JOIN payments p ON g.id = p.group_id
         WHERE g.id = ?
-        GROUP BY g.id
+        GROUP BY g.id, g.name, g.description, g.contribution_amount, g.frequency,
+                 g.max_members, g.current_members, g.cycle_total_rounds, g.status,
+                 g.start_date, g.end_date, g.is_public, g.winner_selection_mode,
+                 g.auto_select_winner, g.created_by, g.created_at, g.updated_at,
+                 u.email, u.full_name
       `, [id]);
       
       if (rows.length === 0) {
@@ -1042,7 +1046,25 @@ router.delete('/groups/:id',
         [id]
       );
 
-      await pool.execute('DELETE FROM equb_groups WHERE id = ?', [id]);
+      // Start transaction for clean deletion
+      const connection = await pool.getConnection();
+      try {
+        await connection.beginTransaction();
+
+        // Clean up all related records
+        await connection.execute('DELETE FROM group_members WHERE group_id = ?', [id]);
+        await connection.execute('DELETE FROM equb_rounds WHERE group_id = ?', [id]);
+        await connection.execute('DELETE FROM payouts WHERE group_id = ?', [id]);
+        await connection.execute('DELETE FROM payments WHERE group_id = ?', [id]);
+        await connection.execute('DELETE FROM equb_groups WHERE id = ?', [id]);
+
+        await connection.commit();
+      } catch (err) {
+        await connection.rollback();
+        throw err;
+      } finally {
+        connection.release();
+      }
 
       const notifyUserIds = new Set(memberRows.map((member) => member.user_id));
       notifyUserIds.add(group.created_by);
@@ -1427,6 +1449,33 @@ router.get('/payments/:id',
         success: false, 
         message: 'Failed to fetch payment' 
       });
+    }
+  }
+);
+
+/**
+ * DELETE /api/admin/payments/:id
+ * Delete a payment record
+ * Requires: payments.delete permission
+ */
+router.delete('/payments/:id',
+  requirePermission('payments.delete'),
+  auditLog('payment_delete', 'payment', (req) => req.params.id),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!(await verifyAdminAction(req, res))) return;
+
+      const [result] = await pool.execute('DELETE FROM payments WHERE id = ?', [id]);
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Payment not found' });
+      }
+
+      return res.json({ success: true, message: 'Payment deleted successfully' });
+    } catch (error) {
+      console.error('Failed to delete payment:', error);
+      return res.status(500).json({ success: false, message: 'Failed to delete payment' });
     }
   }
 );

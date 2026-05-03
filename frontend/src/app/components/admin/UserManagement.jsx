@@ -17,9 +17,11 @@ import {
   Edit, 
   Shield,
   ShieldOff,
+  AlertTriangle,
   UserX,
   UserCheck,
-  Mail
+  Mail,
+  Trash2
 } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -57,6 +59,7 @@ const UserManagement = () => {
   const [showAssignAdminDialog, setShowAssignAdminDialog] = useState(false);
   const [showRevokeAdminDialog, setShowRevokeAdminDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showHardDeleteDialog, setShowHardDeleteDialog] = useState(false);
   const [password, setPassword] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -73,7 +76,9 @@ const UserManagement = () => {
       setLoading(true);
       setError('');
       
-      const response = await apiRequest(`/api/admin/users?page=${page}&limit=10`);
+      const response = await apiRequest(`/api/admin/users?page=${page}&limit=10`, {
+        token: currentUser?.token || undefined
+      });
       
       if (response.success) {
         setUsers(response.data.users);
@@ -81,7 +86,7 @@ const UserManagement = () => {
       }
     } catch (err) {
       console.error('Failed to fetch users:', err);
-      setError('Failed to load users');
+      setError(err.message || 'Failed to load users');
     } finally {
       setLoading(false);
     }
@@ -116,7 +121,8 @@ const UserManagement = () => {
       
       const response = await apiRequest(`/api/admin/users/${userId}/ban`, {
         method: 'POST',
-        body: { password }
+        body: { password },
+        token: currentUser?.token || undefined
       });
       
       if (response.success) {
@@ -143,7 +149,8 @@ const UserManagement = () => {
       setActionLoading(true);
       
       const response = await apiRequest(`/api/admin/users/${userId}/unban`, {
-        method: 'POST'
+        method: 'POST',
+        token: currentUser?.token || undefined
       });
       
       if (response.success) {
@@ -168,7 +175,8 @@ const UserManagement = () => {
       
       const response = await apiRequest(`/api/admin/users/${userId}/roles`, {
         method: 'POST',
-        body: { password }
+        body: { password },
+        token: currentUser?.token || undefined
       });
       
       if (response.success) {
@@ -196,7 +204,8 @@ const UserManagement = () => {
 
       const response = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'DELETE',
-        body: { password }
+        body: { password },
+        token: currentUser?.token || undefined
       });
 
       if (response.success) {
@@ -213,13 +222,38 @@ const UserManagement = () => {
     }
   };
 
+  const handleHardDeleteUser = async (userId) => {
+    try {
+      setActionLoading(true);
+
+      const response = await apiRequest(`/api/admin/users/${userId}/hard`, {
+        method: 'DELETE',
+        body: { password },
+        token: currentUser?.token || undefined
+      });
+
+      if (response.success) {
+        setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
+        setShowHardDeleteDialog(false);
+        setPassword('');
+        setSelectedUser(null);
+      }
+    } catch (err) {
+      console.error('Failed to hard delete user:', err);
+      setError(err.message || 'Failed to hard delete user');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleRevokeAdminRole = async (userId) => {
     try {
       setActionLoading(true);
 
       const response = await apiRequest(`/api/admin/users/${userId}/revoke-admin`, {
         method: 'POST',
-        body: { password }
+        body: { password },
+        token: currentUser?.token || undefined
       });
 
       if (response.success) {
@@ -248,7 +282,8 @@ const UserManagement = () => {
       
       const response = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'PUT',
-        body: updates
+        body: updates,
+        token: currentUser?.token || undefined
       });
       
       if (response.success) {
@@ -502,17 +537,28 @@ const UserManagement = () => {
                         
                         <DropdownMenuSeparator />
                         
-                        <DropdownMenuItem 
-                          className="text-red-600 hover:bg-red-50 focus:bg-red-50"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setPassword('');
-                            setShowDeleteDialog(true);
-                          }}>
-                          <UserX className="h-4 w-4 mr-2" />
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
+                          <DropdownMenuItem 
+                            className="text-red-600 hover:bg-red-50 focus:bg-red-50"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setPassword('');
+                              setShowDeleteDialog(true);
+                            }}>
+                            <UserX className="h-4 w-4 mr-2" />
+                            Soft Delete (Deactivate)
+                          </DropdownMenuItem>
+
+                          <DropdownMenuItem 
+                            className="text-red-600 hover:bg-red-50 focus:bg-red-50"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setPassword('');
+                              setShowHardDeleteDialog(true);
+                            }}>
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Permanently Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
                     </DropdownMenu>
                     </div>
                   </TableCell>
@@ -613,6 +659,43 @@ const UserManagement = () => {
               disabled={actionLoading}
             >
               {actionLoading ? 'Processing...' : 'Delete User'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      {/* Hard Delete User Dialog */}
+      <Dialog open={showHardDeleteDialog} onOpenChange={setShowHardDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-red-600 flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5" />
+              Permanently Delete User
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to PERMANENTLY delete {selectedUser?.full_name}? This will remove their record and all role mappings from the database. This action is irreversible.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="hard-delete-password">Confirm Your Password</Label>
+              <Input
+                id="hard-delete-password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password to confirm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowHardDeleteDialog(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => handleHardDeleteUser(selectedUser?.id)}
+              disabled={!password || actionLoading}
+            >
+              {actionLoading ? 'Deleting...' : 'Permanently Delete'}
             </Button>
           </DialogFooter>
         </DialogContent>
