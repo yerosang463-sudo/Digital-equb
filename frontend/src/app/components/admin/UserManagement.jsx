@@ -662,6 +662,8 @@ const UserManagement = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
       {/* Hard Delete User Dialog */}
       <Dialog open={showHardDeleteDialog} onOpenChange={setShowHardDeleteDialog}>
         <DialogContent>

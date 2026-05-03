@@ -592,6 +592,8 @@ const PaymentManagement = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
+      </Dialog>
+
       {/* Delete Payment Dialog */}
       <Dialog open={showDeletePaymentDialog} onOpenChange={setShowDeletePaymentDialog}>
         <DialogContent>
