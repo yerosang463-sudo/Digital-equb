@@ -44,7 +44,7 @@ import {
 import { Label } from '../ui/label';
 
 const UserManagement = () => {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, token } = useAuth();
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -77,7 +77,7 @@ const UserManagement = () => {
       setError('');
       
       const response = await apiRequest(`/api/admin/users?page=${page}&limit=10`, {
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
       
       if (response.success) {
@@ -122,7 +122,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}/ban`, {
         method: 'POST',
         body: { password },
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
       
       if (response.success) {
@@ -150,7 +150,7 @@ const UserManagement = () => {
       
       const response = await apiRequest(`/api/admin/users/${userId}/unban`, {
         method: 'POST',
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
       
       if (response.success) {
@@ -176,7 +176,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}/roles`, {
         method: 'POST',
         body: { password },
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
       
       if (response.success) {
@@ -205,7 +205,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'DELETE',
         body: { password },
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
 
       if (response.success) {
@@ -229,7 +229,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}/hard`, {
         method: 'DELETE',
         body: { password },
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
 
       if (response.success) {
@@ -253,7 +253,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}/revoke-admin`, {
         method: 'POST',
         body: { password },
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
 
       if (response.success) {
@@ -283,7 +283,7 @@ const UserManagement = () => {
       const response = await apiRequest(`/api/admin/users/${userId}`, {
         method: 'PUT',
         body: updates,
-        token: currentUser?.token || undefined
+        token: token || undefined
       });
       
       if (response.success) {

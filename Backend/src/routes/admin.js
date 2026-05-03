@@ -1873,6 +1873,33 @@ router.get('/payouts/:id',
   }
 );
 
+/**
+ * DELETE /api/admin/payouts/:id
+ * Delete a payout record
+ * Requires: payouts.delete permission
+ */
+router.delete('/payouts/:id',
+  requirePermission('payouts.delete'),
+  auditLog('payout_delete', 'payout', (req) => req.params.id),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      if (!(await verifyAdminAction(req, res))) return;
+
+      const [result] = await pool.execute('DELETE FROM payouts WHERE id = ?', [id]);
+      
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ success: false, message: 'Payout not found' });
+      }
+
+      return res.json({ success: true, message: 'Payout deleted successfully' });
+    } catch (error) {
+      console.error('Failed to delete payout:', error);
+      return res.status(500).json({ success: false, message: 'Failed to delete payout' });
+    }
+  }
+);
+
 // ==================== Analytics Endpoint ====================
 
 /**
@@ -1996,3 +2023,5 @@ router.get('/analytics',
     }
   }
 );
+
+module.exports = router;
