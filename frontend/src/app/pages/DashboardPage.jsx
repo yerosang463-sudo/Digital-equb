@@ -22,7 +22,7 @@ export function DashboardPage() {
 
     async function loadDashboard() {
       try {
-        const [statsResponse, groupsResponse, paymentsResponse, notificationsResponse] = await Promise.all([
+        const [statsResult, groupsResult, paymentsResult, notificationsResult] = await Promise.allSettled([
           apiRequest("/api/dashboard/stats", { skipCache: true }),
           apiRequest("/api/groups/my", { skipCache: true }),
           apiRequest("/api/payments?status=pending&limit=10", { skipCache: true }),
@@ -30,10 +30,10 @@ export function DashboardPage() {
         ]);
 
         if (!ignore) {
-          setStats(statsResponse.stats);
-          setGroups(groupsResponse.groups || []);
-          setPendingPayments(paymentsResponse.payments || []);
-          setNotifications(notificationsResponse.notifications || []);
+          if (statsResult.status === 'fulfilled') setStats(statsResult.value.stats);
+          setGroups(groupsResult.status === 'fulfilled' ? (groupsResult.value.groups || []) : []);
+          setPendingPayments(paymentsResult.status === 'fulfilled' ? (paymentsResult.value.payments || []) : []);
+          setNotifications(notificationsResult.status === 'fulfilled' ? (notificationsResult.value.notifications || []) : []);
         }
       } catch (error) {
         if (!ignore) {
@@ -56,7 +56,7 @@ export function DashboardPage() {
   }, []);
 
   const activeGroups = groups.filter((group) =>
-    ["active", "full", "completed"].includes(group.display_status || group.status)
+    ["open", "active", "full", "completed"].includes(group.display_status || group.status)
   );
 
   if (loading) {

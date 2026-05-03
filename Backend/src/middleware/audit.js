@@ -106,7 +106,7 @@ const getAuditLogs = async (req, res) => {
     const hasCreatedAt = auditColumnSet.has('created_at');
 
     // Get total count first
-    const countQuery = `SELECT COUNT(*) as total FROM admin_actions WHERE 1=1`;
+    let countQuery = `SELECT COUNT(*) as total FROM admin_actions WHERE 1=1`;
     const countParams = [];
     
     if (admin_user_id) {

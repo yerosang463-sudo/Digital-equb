@@ -118,8 +118,7 @@ router.get('/users',
         query += ' AND u.is_active = ?';
         params.push(is_active === 'true' ? 1 : 0);
       }
-
-      query += ' GROUP BY u.id';
+      query += ' GROUP BY u.id, u.full_name, u.email, u.phone, u.avatar_url, u.bio, u.is_active, u.created_at, u.updated_at';
       
       // Get total count
       const countQuery = `SELECT COUNT(*) as total FROM (${query}) as filtered`;
@@ -184,7 +183,7 @@ router.get('/users/:id',
         LEFT JOIN roles r ON ur.role_id = r.id
         LEFT JOIN group_members gm ON u.id = gm.user_id
         WHERE u.id = ?
-        GROUP BY u.id
+        GROUP BY u.id, u.full_name, u.email, u.phone, u.avatar_url, u.bio, u.is_active, u.created_at, u.updated_at
       `, [id]);
       
       if (rows.length === 0) {
@@ -1530,7 +1529,7 @@ router.get('/payouts',
       }
 
       // Get total count first
-      const countQuery = `SELECT COUNT(*) as total FROM payouts WHERE 1=1`;
+      let countQuery = `SELECT COUNT(*) as total FROM payouts WHERE 1=1`;
       const countParams = [];
       
       if (status) {

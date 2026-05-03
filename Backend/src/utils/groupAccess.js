@@ -7,7 +7,7 @@
  * @returns {boolean}
  */
 function canViewGroup(user, group) {
-  return Boolean(group.is_public) || Boolean(group.is_member);
+  return Boolean(user?.isAdmin) || Boolean(group.is_public) || Boolean(group.is_member);
 }
 
 /**

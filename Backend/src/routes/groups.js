@@ -67,19 +67,30 @@ async function fetchGroupDetails(groupId, userId) {
         CASE WHEN my_member.user_id IS NOT NULL THEN 1 ELSE 0 END AS is_member
       FROM equb_groups g
       JOIN users creator ON creator.id = g.created_by
-      LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
+      LEFT JOIN (
+        SELECT group_id, MIN(user_id) AS user_id FROM group_members WHERE role = 'admin' GROUP BY group_id
+      ) admin_member ON admin_member.group_id = g.id
       LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
       LEFT JOIN (
         SELECT r.id, r.group_id, r.round_number, r.due_date, r.status, r.selection_method, r.winner_id
         FROM equb_rounds r
+        JOIN (
+          SELECT group_id, MAX(round_number) AS max_round
+          FROM equb_rounds
+          WHERE status IN ('collecting', 'winner_selected')
+          GROUP BY group_id
+        ) max_r ON max_r.group_id = r.group_id AND max_r.max_round = r.round_number
         WHERE r.status IN ('collecting', 'winner_selected')
-        ORDER BY r.round_number DESC
       ) AS latest_round ON latest_round.group_id = g.id
       LEFT JOIN users winner ON winner.id = latest_round.winner_id
       LEFT JOIN (
         SELECT p.id, p.group_id, p.round_number, p.recipient_id
         FROM payouts p
-        ORDER BY p.round_number DESC
+        JOIN (
+          SELECT group_id, MAX(round_number) AS max_round
+          FROM payouts
+          GROUP BY group_id
+        ) max_p ON max_p.group_id = p.group_id AND max_p.max_round = p.round_number
       ) AS latest_payout_data ON latest_payout_data.group_id = g.id
       LEFT JOIN users latest_winner ON latest_winner.id = latest_payout_data.recipient_id
       LEFT JOIN group_members my_member ON my_member.group_id = g.id AND my_member.user_id = ?
@@ -195,18 +206,24 @@ router.get('/', authenticate, async (req, res, next) => {
         my_member.role = 'admin' AS is_admin
       FROM equb_groups g
       JOIN users creator ON creator.id = g.created_by
-      LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
+      LEFT JOIN (
+        SELECT group_id, MIN(user_id) as user_id FROM group_members WHERE role = 'admin' GROUP BY group_id
+      ) admin_member ON admin_member.group_id = g.id
       LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
       LEFT JOIN (
         SELECT r.id, r.group_id, r.round_number, r.due_date, r.winner_id
         FROM equb_rounds r
+        JOIN (
+          SELECT group_id, MAX(round_number) as max_round
+          FROM equb_rounds
+          WHERE status IN ('collecting', 'winner_selected')
+          GROUP BY group_id
+        ) max_r ON max_r.group_id = r.group_id AND max_r.max_round = r.round_number
         WHERE r.status IN ('collecting', 'winner_selected')
-        ORDER BY r.round_number DESC
       ) AS latest_round ON latest_round.group_id = g.id
       LEFT JOIN users winner ON winner.id = latest_round.winner_id
       LEFT JOIN group_members my_member ON my_member.group_id = g.id AND my_member.user_id = ?
       WHERE 1 = 1
-      GROUP BY g.id, creator.full_name, admin_user.full_name, latest_round.round_number, latest_round.due_date, latest_round.id, winner.full_name, my_member.user_id, my_member.role
     `;
 
     const params = [req.user.id];
@@ -226,7 +243,7 @@ router.get('/', authenticate, async (req, res, next) => {
       params.push(`%${search}%`, `%${search}%`);
     }
 
-    query += ' GROUP BY g.id ORDER BY g.created_at DESC LIMIT ' + parseInt(limit, 10) + ' OFFSET ' + offset;
+    query += ' ORDER BY g.created_at DESC LIMIT ' + parseInt(limit, 10) + ' OFFSET ' + offset;
 
     const [rows] = await pool.query(query, params);
 
@@ -279,17 +296,23 @@ router.get('/my', authenticate, async (req, res, next) => {
        FROM equb_groups g
        JOIN group_members gm ON gm.group_id = g.id
        JOIN users creator ON creator.id = g.created_by
-       LEFT JOIN group_members admin_member ON admin_member.group_id = g.id AND admin_member.role = 'admin'
+       LEFT JOIN (
+         SELECT group_id, MIN(user_id) as user_id FROM group_members WHERE role = 'admin' GROUP BY group_id
+       ) admin_member ON admin_member.group_id = g.id
        LEFT JOIN users admin_user ON admin_user.id = admin_member.user_id
        LEFT JOIN (
          SELECT r.id, r.group_id, r.round_number, r.due_date, r.winner_id
          FROM equb_rounds r
+         JOIN (
+           SELECT group_id, MAX(round_number) as max_round
+           FROM equb_rounds
+           WHERE status IN ('collecting', 'winner_selected')
+           GROUP BY group_id
+         ) max_r ON max_r.group_id = r.group_id AND max_r.max_round = r.round_number
          WHERE r.status IN ('collecting', 'winner_selected')
-         ORDER BY r.round_number DESC
        ) AS latest_round ON latest_round.group_id = g.id
        LEFT JOIN users winner ON winner.id = latest_round.winner_id
        WHERE gm.user_id = ?
-       GROUP BY g.id, gm.role, gm.payout_order, gm.has_received_payout, gm.payout_date, gm.joined_at, creator.full_name, admin_user.full_name, latest_round.round_number, latest_round.due_date, winner.full_name
        ORDER BY gm.joined_at DESC`,
       [req.user.id]
     );
@@ -347,7 +370,7 @@ router.post(
       frequency,
       winner_selection_mode = 'random',
       auto_select_winner = winner_selection_mode === 'random',
-      is_public = false,
+      is_public = true,
       start_date,
       end_date,
     } = req.body;
