@@ -163,19 +163,24 @@ router.post('/google', async (req, res, next) => {
       sub: googleId,
     } = payload;
 
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Search for existing user by googleId or email (regardless of is_active status)
     let [rows] = await pool.query(
       `SELECT *
        FROM users
-       WHERE (google_id = ? OR email = ?) AND is_active = 1
+       WHERE google_id = ? OR email = ?
        ORDER BY (google_id = ?) DESC
        LIMIT 1`,
-      [googleId, email, googleId]
+      [googleId, normalizedEmail, googleId]
     );
 
-    const createdAccount = rows.length === 0;
     let user;
+    let createdAccount = false;
 
-    if (createdAccount) {
+    if (rows.length === 0) {
+      // New user registration via Google
+      createdAccount = true;
       const unusablePasswordHash = await bcrypt.hash(
         crypto.randomBytes(32).toString('hex'),
         10
@@ -185,7 +190,7 @@ router.post('/google', async (req, res, next) => {
         `INSERT INTO users
           (full_name, email, password_hash, avatar_url, google_id, auth_provider, email_verified, created_at)
          VALUES (?, ?, ?, ?, ?, 'google', 1, NOW())`,
-        [name || email, email, unusablePasswordHash, picture || null, googleId]
+        [name || normalizedEmail, normalizedEmail, unusablePasswordHash, picture || null, googleId]
       );
 
       const [newRows] = await pool.query(
@@ -194,8 +199,19 @@ router.post('/google', async (req, res, next) => {
       );
       user = newRows[0];
     } else {
+      // Existing user - link Google ID if not already linked
       user = rows[0];
 
+      // Check if account is active
+      if (user.is_active === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'This account has been deactivated. Please contact support.',
+        });
+      }
+
+      // Update existing user with Google info
+      // NOTE: We don't change auth_provider if it's already 'local' to avoid breaking password login
       await pool.query(
         `UPDATE users
          SET avatar_url = COALESCE(?, avatar_url),
