@@ -21,9 +21,11 @@ const performanceMiddleware = (req, res, next) => {
       console.error(`🚨 CRITICAL: ${req.method} ${req.originalUrl} took ${duration}ms`);
     }
     
-    // Add performance headers
-    res.set('X-Response-Time', `${duration}ms`);
-    res.set('X-Response-Time-Nanos', `${durationNanos.toFixed(3)}ms`);
+    // Add performance headers (only if headers not already sent)
+    if (!res.headersSent) {
+      res.set('X-Response-Time', `${duration}ms`);
+      res.set('X-Response-Time-Nanos', `${durationNanos.toFixed(3)}ms`);
+    }
     
     // Log in development mode
     if (process.env.NODE_ENV === 'development') {
