@@ -1,12 +1,12 @@
 const performanceMiddleware = (req, res, next) => {
   const start = Date.now();
-  const startTime = process.hrtime.bigint();
+  const startTime = process.hrtime && process.hrtime.bigint ? process.hrtime.bigint() : Date.now();
   
   // Add performance tracking to response
   res.on('finish', () => {
-    const end = process.hrtime.bigint();
+    const end = process.hrtime && process.hrtime.bigint ? process.hrtime.bigint() : Date.now();
     const duration = Date.now() - start;
-    const durationNanos = Number(end - startTime) / 1000000; // Convert to milliseconds
+    const durationNanos = process.hrtime && process.hrtime.bigint ? Number(end - startTime) / 1000000 : duration; // Convert to milliseconds
     
     // Log performance data
     console.log(`🚀 ${req.method} ${req.originalUrl} - ${duration}ms - ${res.statusCode}`);

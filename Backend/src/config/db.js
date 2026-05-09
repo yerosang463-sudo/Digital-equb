@@ -40,9 +40,8 @@ async function testConnection() {
   }
 }
 
-const { createPerformancePool } = require('../middleware/performance');
+// Temporarily disable performance monitoring to fix deployment
+// const { createPerformancePool } = require('../middleware/performance');
+// const monitoredPool = createPerformancePool(pool);
 
-// Enable performance monitoring on the pool
-const monitoredPool = createPerformancePool(pool);
-
-module.exports = { pool: monitoredPool, testConnection };
+module.exports = { pool, testConnection };
