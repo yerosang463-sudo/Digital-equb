@@ -52,11 +52,25 @@ router.post('/', async (req, res, next) => {
       `,
     };
 
-    // We don't await the email to avoid blocking the user response, 
-    // but we log any errors.
-    transporter.sendMail(mailOptions).catch(err => {
-      console.error('Nodemailer Error:', err.message);
-    });
+    // Send Email via Gmail SMTP
+    try {
+      await transporter.sendMail(mailOptions);
+      console.log('Contact email sent successfully to:', process.env.ADMIN_EMAIL);
+    } catch (emailError) {
+      console.error('Nodemailer Error:', emailError.message);
+      console.error('Email configuration check:');
+      console.error('EMAIL_USER:', process.env.EMAIL_USER);
+      console.error('ADMIN_EMAIL:', process.env.ADMIN_EMAIL);
+      
+      // Still return success since message was stored in database
+      res.status(201).json({
+        success: true,
+        message: 'Your message has been received! (Email delivery failed, but message stored)',
+        id: result.insertId,
+        warning: 'Email delivery failed. Please contact support directly.'
+      });
+      return;
+    }
 
     res.status(201).json({
       success: true,
