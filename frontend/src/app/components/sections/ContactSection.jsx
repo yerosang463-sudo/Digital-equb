@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
-import { API_BASE_URL } from "../../lib/api";
+import { apiRequest } from "../../lib/api";
 
 function ContactSection() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,15 +19,11 @@ function ContactSection() {
     
     setIsSubmitting(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/contact`, {
+      const data = await apiRequest('/api/contact', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
+        body: formData,
+        skipCache: true
       });
-
-      const data = await response.json();
       
       if (data.success) {
         setIsSent(true);
