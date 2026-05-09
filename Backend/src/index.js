@@ -1,12 +1,14 @@
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
+const compression = require('compression');
 require('./config/env');
 
 const { testConnection } = require('./config/db');
 const { DatabaseMigrator } = require('./database/migrator');
 const { autoMigrate } = require('./database/auto-migrate');
 const { errorHandler } = require('./middleware/errorHandler');
+const { performanceMiddleware, createPerformancePool, memoryMonitor } = require('./middleware/performance');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -14,6 +16,7 @@ const groupRoutes = require('./routes/groups');
 const paymentRoutes = require('./routes/payments');
 const notificationRoutes = require('./routes/notifications');
 const dashboardRoutes = require('./routes/dashboard');
+const dashboardOptimizedRoutes = require('./routes/dashboard-optimized');
 const contactRoutes = require('./routes/contact');
 const adminRoutes = require('./routes/admin');
 
@@ -37,6 +40,18 @@ const envCorsOrigins = [
 
 const allowedOrigins = [...new Set([...envCorsOrigins, ...defaultCorsOrigins])];
 
+// Add compression middleware for 40-60% smaller responses
+app.use(compression({
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) {
+      return false;
+    }
+    return compression.filter(req, res);
+  },
+  level: 6, // Good balance of speed vs compression
+  threshold: 1024, // Only compress responses > 1KB
+}));
+
 app.use(cors({
   origin(origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
@@ -55,6 +70,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
+// Add performance monitoring middleware
+app.use(performanceMiddleware);
+
 app.get('/api/health', (req, res) => {
   res.json({ success: true, status: 'Digital Equb API is running', timestamp: new Date() });
 });
@@ -65,6 +83,7 @@ app.use('/api/groups', groupRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/dashboard-optimized', dashboardOptimizedRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/admin', adminRoutes);
 

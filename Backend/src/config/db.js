@@ -11,9 +11,14 @@ const pool = mysql.createPool({
   password: process.env.DB_PASSWORD || '@yero54321',
   database: process.env.DB_NAME || 'digital-equb',
   waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
+  connectionLimit: 20, // Increased from 10 for better concurrency
+  queueLimit: 100, // Added queue limit to handle connection bursts
+  maxIdle: 10, // Maximum idle connections
+  idleTimeout: 60000, // 1 minute idle timeout
+  acquireTimeout: 10000, // 10 seconds to acquire connection
   timezone: '+00:00',
+  multipleStatements: true, // Enable multiple statements for batch queries
+  namedPlaceholders: true, // Enable named placeholders for better performance
   // Enable SSL for TiDB Cloud (required for secure connections)
   ssl: isTiDB ? {
     minVersion: 'TLSv1.2',
@@ -35,4 +40,9 @@ async function testConnection() {
   }
 }
 
-module.exports = { pool, testConnection };
+const { createPerformancePool } = require('../middleware/performance');
+
+// Enable performance monitoring on the pool
+const monitoredPool = createPerformancePool(pool);
+
+module.exports = { pool: monitoredPool, testConnection };

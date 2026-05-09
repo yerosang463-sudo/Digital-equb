@@ -6,7 +6,7 @@ import { GroupCard } from "../components/GroupCard";
 import { NotificationCard } from "../components/NotificationCard";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { apiRequest } from "../lib/api";
+import { apiRequest } from "../lib/api-optimized";
 import { useAuth } from "../providers/AuthProvider";
 
 export function DashboardPage() {
@@ -22,21 +22,26 @@ export function DashboardPage() {
 
     async function loadDashboard() {
       try {
-        const [statsResult, groupsResult, paymentsResult, notificationsResult] = await Promise.allSettled([
-          apiRequest("/api/dashboard/stats", { skipCache: true }),
-          apiRequest("/api/groups/my", { skipCache: true }),
-          apiRequest("/api/payments?status=pending&limit=10", { skipCache: true }),
-          apiRequest("/api/notifications?limit=5", { skipCache: true }),
-        ]);
-
+        // Use optimized single API call
+const dashboardResult = await apiRequest("/api/dashboard-optimized/combined", { skipCache: true });
+        
         if (!ignore) {
-          if (statsResult.status === 'fulfilled') setStats(statsResult.value.stats);
-          setGroups(groupsResult.status === 'fulfilled' ? (groupsResult.value.groups || []) : []);
-          setPendingPayments(paymentsResult.status === 'fulfilled' ? (paymentsResult.value.payments || []) : []);
-          setNotifications(notificationsResult.status === 'fulfilled' ? (notificationsResult.value.notifications || []) : []);
+          if (dashboardResult.success) {
+            setStats(dashboardResult.stats);
+            setGroups(dashboardResult.recent_groups || []);
+            setPendingPayments(dashboardResult.recent_payments || []);
+            setNotifications(dashboardResult.recent_notifications || []);
+          } else {
+            setStats(null);
+            setGroups([]);
+            setPendingPayments([]);
+            setNotifications([]);
+          }
         }
-      } catch (error) {
+
+        } catch (error) {
         if (!ignore) {
+          console.error('Dashboard load error:', error);
           setStats(null);
           setGroups([]);
           setPendingPayments([]);
